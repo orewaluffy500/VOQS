@@ -95,8 +95,8 @@ public class World {
 
 
 
-    public void place_block(int x, int y){
-        Block block = new Block(Helpers.newVector2((float) x, (float) y));
+    public void place_block(int x, int y, String name){
+        Block block = new Block(Helpers.newVector2((float) x, (float) y), name);
 
         set_block(x, y, block, true);
     }
@@ -111,6 +111,22 @@ public class World {
 
         Raylib.Vector2 currentChunkPos = Helpers.newVector2(0, 0);
 
+        ArrayList<Chunk> chunksToDraw = getChunksToRender(currentChunkPos);
+
+        for (Chunk chunk : chunksToDraw){
+            renderChunkBorders(chunk);
+
+            for (Block block : chunk.blocks){
+                if (block == null) continue;
+
+                renderBlock(block);
+            }
+        }
+
+        Raylib.DrawRectangle(player.x * Globals.CELL_SIZE, player.y * Globals.CELL_SIZE, Globals.CELL_SIZE, Globals.CELL_SIZE, Helpers.newColor(80, 255, 80, 255));
+    }
+
+    private ArrayList<Chunk> getChunksToRender(Raylib.Vector2 currentChunkPos) {
         ArrayList<Chunk> chunksToDraw = new ArrayList<>();
 
         for (int x = (int) (currentChunkPos.x() - Globals.CHUNK_DRAW_DISTANCE); x <= currentChunkPos.x() + Globals.CHUNK_DRAW_DISTANCE; x++){
@@ -118,35 +134,28 @@ public class World {
                 chunksToDraw.add(chunks.get(chunkKey(x,  y)));
             }
         }
+        return chunksToDraw;
+    }
 
-        for (Chunk chunk : chunksToDraw){
-            int chunkWorldX =
-                    (int)(chunk.position.x() * Globals.CHUNK_SIZE * Globals.CELL_AREA);
+    private static void renderBlock(Block block) {
 
-            int chunkWorldY =
-                    (int)(chunk.position.y() * Globals.CHUNK_SIZE * Globals.CELL_AREA);
-            Raylib.DrawRectangleLines(
-                    chunkWorldX, chunkWorldY,
-                    Globals.CHUNK_SIZE * Globals.CELL_AREA, Globals.CHUNK_SIZE * Globals.CELL_AREA,
-                    Helpers.newColor(255, 255, 255, 8)
-            );
+        Raylib.Color finalColor = block.fallBackColor;
 
-            for (Block block : chunk.blocks){
-                if (block == null) continue;
+        Raylib.DrawRectangle((int) block.position.x() * Globals.CELL_SIZE, (int) block.position.y() * Globals.CELL_SIZE, Globals.CELL_SIZE, Globals.CELL_SIZE, finalColor);
+    }
 
-                Raylib.Vector2 finalPos = Helpers.newVector2(
-                        (block.position.x() * Globals.CELL_AREA) + Globals.CELL_SPACING,
-                        (block.position.y() * Globals.CELL_AREA) + Globals.CELL_SPACING
-                );
+    private static void renderChunkBorders(Chunk chunk) {
+        int chunkWorldX =
+                (int)(chunk.position.x() * Globals.CHUNK_SIZE * Globals.CELL_SIZE);
 
-                Raylib.DrawRectangle((int) finalPos.x(), (int) finalPos.y(), Globals.CELL_SIZE, Globals.CELL_SIZE, Colors.RED);
-            }
-        }
+        int chunkWorldY =
+                (int)(chunk.position.y() * Globals.CHUNK_SIZE * Globals.CELL_SIZE);
 
-        Raylib.Vector2 finalPos = Helpers.newVector2(
-                (player.x * Globals.CELL_AREA) + Globals.CELL_SPACING,
-                (player.y * Globals.CELL_AREA) + Globals.CELL_SPACING
+
+        Raylib.DrawRectangleLines(
+                chunkWorldX, chunkWorldY,
+                Globals.CHUNK_SIZE * Globals.CELL_SIZE, Globals.CHUNK_SIZE * Globals.CELL_SIZE,
+                Helpers.newColor(255, 255, 255, 8)
         );
-        Raylib.DrawRectangle((int) finalPos.x(), (int) finalPos.y(), Globals.CELL_SIZE, Globals.CELL_SIZE, Helpers.newColor(80, 255, 80, 255));
     }
 }

@@ -6,6 +6,7 @@ public class Player {
     public int x, y;
     private float stepTime;
     private World world;
+    private int currentBlockIndex = 0;
 
     public Player(World w){
         x = 5;
@@ -15,6 +16,11 @@ public class Player {
     }
 
     public void update(){
+        var visibleBlocks = BlockRegistry.visibleBlocks;
+
+        if (currentBlockIndex >= visibleBlocks.size()){
+            currentBlockIndex = 0;
+        }
 
         if (stepTime > 0) stepTime -= Raylib.GetFrameTime();
 
@@ -43,11 +49,15 @@ public class Player {
 
 
         if (Raylib.IsKeyDown(Raylib.KEY_E)){
-            world.place_block(x, y);
+            world.place_block(x, y, (String) visibleBlocks.keySet().toArray()[currentBlockIndex]);
         }
 
         else if (Raylib.IsKeyDown(Raylib.KEY_Q)){
             world.remove_block(x, y);
+        }
+
+        if (Raylib.IsKeyPressed(Raylib.KEY_Z)){
+            currentBlockIndex++;
         }
     }
 }

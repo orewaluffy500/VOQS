@@ -11,8 +11,6 @@ public class GameEngine {
 
         initialize();
 
-
-        world.place_block(18, 13);
     }
 
     private void initialize(){
