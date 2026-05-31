@@ -3,6 +3,7 @@ package io.voqs;
 import com.raylib.Colors;
 import com.raylib.Helpers;
 import com.raylib.Raylib;
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -139,9 +140,26 @@ public class World {
 
     private static void renderBlock(Block block) {
 
-        Raylib.Color finalColor = block.fallBackColor;
+        Raylib.Color fallBackColor = block.fallBackColor;
 
-        Raylib.DrawRectangle((int) block.position.x() * Globals.CELL_SIZE, (int) block.position.y() * Globals.CELL_SIZE, Globals.CELL_SIZE, Globals.CELL_SIZE, finalColor);
+        Raylib.Texture texture = TextureRegistry.getTexture(block.name);
+
+        Raylib.Vector2 cellSizeV = Helpers.newVector2(Globals.CELL_SIZE, Globals.CELL_SIZE);
+        Raylib.Vector2 worldPosition = Raylib.Vector2Multiply(block.position, cellSizeV);
+
+        Raylib.Rectangle sourceRectangle = Helpers.newRectangle(0, 0, Globals.CELL_SIZE, Globals.CELL_SIZE);
+
+        if (!Raylib.IsTextureValid(texture)){
+            Raylib.DrawRectangleV(worldPosition, cellSizeV, fallBackColor);
+            return;
+        }
+
+        Raylib.DrawTextureRec(
+                texture,
+                sourceRectangle,
+                worldPosition,
+                Colors.WHITE
+        );
     }
 
     private static void renderChunkBorders(Chunk chunk) {

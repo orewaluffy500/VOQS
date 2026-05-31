@@ -1,5 +1,6 @@
 package io.voqs;
 import com.raylib.*;
+import org.w3c.dom.Text;
 
 public class GameEngine {
     public GameEngine(int width, int height, int fps, String title) {
@@ -37,6 +38,8 @@ public class GameEngine {
     }
 
     private void destroy(){
+
+        TextureRegistry.unloadAll();
         Raylib.CloseWindow();
     }
 

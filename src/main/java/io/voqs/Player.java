@@ -11,7 +11,7 @@ public class Player {
     public Player(World w){
         x = 5;
         y = 5;
-        stepTime = 0.1f;
+        stepTime = 0.2f;
         world = w;
     }
 

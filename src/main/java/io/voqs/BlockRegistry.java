@@ -13,14 +13,16 @@ public class BlockRegistry {
     protected static HashMap<String, BlockRegistryData> visibleBlocks = blocKRegister;
 
     static {
-        registerBlock("dirt", Colors.BROWN);
-        registerBlock("stone", Colors.GRAY);
+        registerBlock("dirt", "block/dirt.png", Colors.BROWN);
+        registerBlock("stone", "block/stone.png", Colors.GRAY);
     }
 
-    public static void registerBlock(String name, Raylib.Color color){
+    public static void registerBlock(String name, String path, Raylib.Color color){
         if (blocKRegister.containsKey(name)) return;
 
-        blocKRegister.put(name, new BlockRegistryData(color));
+        TextureRegistry.loadTexture(name, path);
+
+        blocKRegister.put(name, new BlockRegistryData(TextureRegistry.getTexture(name), color));
         updateVisibleBlocks();
     }
 
