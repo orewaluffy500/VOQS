@@ -1,5 +1,8 @@
-package io.voqs;
+package io.voqs.plugins;
 
+import io.voqs.globals.KeyInput;
+import io.voqs.world.Player;
+import io.voqs.world.World;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
@@ -22,8 +25,9 @@ public class PluginAPIBuilder {
 
     public void initializeAPI(){
         makeLogTable();
-        makePlayerTable();
         makeKeysTable();
+        makePlayerTable();
+        makeMetadataTable();
     }
 
     private void makeLogTable() {
@@ -91,6 +95,18 @@ public class PluginAPIBuilder {
             }
         });
 
+        playerTable.set("SelectBlock", new VarArgFunction() {
+            @Override
+            public Varargs invoke(Varargs args) {
+                LuaValue name = args.arg(1);
+                if (!name.isstring()) return LuaValue.NONE;
+
+                player.setHolding(name.tojstring());
+
+                return LuaValue.NONE;
+            }
+        });
+
         globals.set("Player", playerTable);
     }
 
@@ -113,5 +129,22 @@ public class PluginAPIBuilder {
         });
 
         globals.set("Keys", keysTable);
+    }
+
+    private void makeMetadataTable(){
+        LuaTable metadataTable = new LuaTable();
+
+        metadataTable.set("PlayerMeta", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue arg) {
+                if (!arg.isstring()) return LuaValue.NONE;
+
+                return player.metadata.metaValueLua(arg.tojstring());
+            }
+        });
+
+        metadataTable.set("PlayerMetaAdd", metadataTable.get("PlayerMeta"));
+
+        globals.set("Metadata", metadataTable);
     }
 }

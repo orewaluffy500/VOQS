@@ -1,16 +1,16 @@
-package io.voqs;
+package io.voqs.blocks;
 
 import com.raylib.Colors;
 import com.raylib.Helpers;
 import com.raylib.Raylib;
+import io.voqs.globals.TextureRegistry;
 import org.luaj.vm2.LuaTable;
 
-import java.awt.*;
 import java.util.HashMap;
 
 public class BlockRegistry {
-    protected static HashMap<String, BlockRegistryData> blocKRegister = new HashMap<>();
-    protected static HashMap<String, BlockRegistryData> visibleBlocks = blocKRegister;
+    public static HashMap<String, BlockRegistryData> blocKRegister = new HashMap<>();
+    public static HashMap<String, BlockRegistryData> visibleBlocks = blocKRegister;
 
     static {
         registerBlock("dirt", "block/dirt.png", Colors.BROWN);

@@ -1,4 +1,4 @@
-package io.voqs;
+package io.voqs.blocks;
 
 import com.raylib.Raylib;
 

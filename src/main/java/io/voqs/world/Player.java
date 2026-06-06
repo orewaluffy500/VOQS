@@ -1,20 +1,27 @@
-package io.voqs;
+package io.voqs.world;
 
 import com.raylib.Raylib;
+import io.voqs.blocks.BlockRegistry;
+import io.voqs.globals.KeyInput;
+import io.voqs.plugins.Metadata;
 
-import static io.voqs.BlockRegistry.visibleBlocks;
+import java.util.Arrays;
+
+import static io.voqs.blocks.BlockRegistry.visibleBlocks;
 
 public class Player {
     public int x, y;
-    private float stepTime;
-    private World world;
-    private int currentBlockIndex = 0;
+    public float stepTime;
+    private final World world;
+    public int currentBlockIndex = 0;
+    public Metadata metadata;
 
     public Player(World w){
         x = 5;
         y = 5;
         stepTime = 0.2f;
         world = w;
+        metadata = new Metadata();
     }
 
     public void update(){
@@ -69,5 +76,13 @@ public class Player {
         if (currentBlockIndex >= visibleBlocks.size()) currentBlockIndex = visibleBlocks.size() - 1;
 
         return (String) visibleBlocksArray[currentBlockIndex];
+    }
+
+    public void setHolding(String name){
+        var visibleBlockNames = visibleBlocks.keySet().toArray();
+
+        var index = Arrays.stream(visibleBlockNames).toList().indexOf(name);
+
+        currentBlockIndex = index;
     }
 }

@@ -1,4 +1,4 @@
-package io.voqs;
+package io.voqs.plugins;
 
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;

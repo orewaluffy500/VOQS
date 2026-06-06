@@ -1,9 +1,10 @@
-package io.voqs;
+package io.voqs.plugins;
 
+import io.voqs.world.Player;
+import io.voqs.world.World;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.jse.JsePlatform;
 
 import java.io.IOException;

@@ -1,57 +1,19 @@
-package io.voqs;
+package io.voqs.world;
 
 import com.raylib.Colors;
 import com.raylib.Helpers;
 import com.raylib.Raylib;
+import io.voqs.blocks.Block;
+import io.voqs.globals.TextureRegistry;
+import io.voqs.globals.VGlobals;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 
-class Chunk {
-    protected Block[] blocks = new Block[VGlobals.CHUNK_SIZE * VGlobals.CHUNK_SIZE];
-    protected Raylib.Vector2 position;
-
-    public Chunk(int x, int y){
-        position = Helpers.newVector2(x, y);
-    }
-
-    public int index(int localX, int localY){
-        if (
-                localX < 0 || localX >= VGlobals.CHUNK_SIZE ||
-                        localY < 0 || localY >= VGlobals.CHUNK_SIZE
-        ) return -1;
-
-        return localX + localY * VGlobals.CHUNK_SIZE;
-    }
-
-    public Block get_block(int localX, int localY){
-        int idx = index(localX, localY);
-        if (idx < 0 || idx >= blocks.length) return null;
-
-        return blocks[idx];
-    }
-
-    public void set_block(int localX, int localY, Block block){
-        int idx = index(localX, localY);
-        if (idx < 0 || idx >= blocks.length) return;
-
-        blocks[idx] = block;
-    }
-
-    public void set_block_safe(int localX, int localY, Block block){
-        int idx = index(localX, localY);
-        if (idx < 0 || idx >= blocks.length) return;
-
-        if (blocks[idx] != null) return;
-
-        blocks[idx] = block;
-    }
-}
-
 public class World {
     protected HashMap<Long, Chunk> chunks = new HashMap<>();
-    protected Player player;
+    public Player player;
 
     public World(){
          player = new Player(this);

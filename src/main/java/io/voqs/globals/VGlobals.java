@@ -1,4 +1,4 @@
-package io.voqs;
+package io.voqs.globals;
 
 public class VGlobals {
     public static final int CHUNK_SIZE = 16;

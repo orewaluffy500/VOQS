@@ -1,6 +1,9 @@
 package io.voqs;
 import com.raylib.*;
-import org.w3c.dom.Text;
+import io.voqs.globals.TextureRegistry;
+import io.voqs.globals.VGlobals;
+import io.voqs.plugins.PluginEngine;
+import io.voqs.world.World;
 
 public class GameEngine {
     public GameEngine(int width, int height, int fps, String title) {
