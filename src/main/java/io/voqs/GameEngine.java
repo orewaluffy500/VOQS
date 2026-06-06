@@ -9,9 +9,11 @@ public class GameEngine {
         this.fps = fps;
         this.title = title;
         this.world = new World();
+        this.pluginEngine = new PluginEngine(world);
 
         initialize();
 
+        pluginEngine.loadScript("./metadata/plugins/test.lua");
     }
 
     private void initialize(){
@@ -30,9 +32,22 @@ public class GameEngine {
     }
 
     public void gameloop(){
+        pluginEngine.runOnceCallback();
+
+        float timer = 0f;
+
         while (!Raylib.WindowShouldClose()){
+            timer += Raylib.GetFrameTime();
+
+            if (timer >= (1.0f / VGlobals.PULSE_RATE)){
+                timer = 0;
+                pluginEngine.runPulseCallback();
+            }
+
             update(Raylib.GetFrameTime());
         }
+
+        pluginEngine.runExitCallback();
 
         destroy();
     }
@@ -46,6 +61,7 @@ public class GameEngine {
     private final int width, height, fps;
     private final String title;
     private final World world;
+    private final PluginEngine pluginEngine;
 
     private Raylib.Color backgroundColor = Colors.RAYWHITE;
 

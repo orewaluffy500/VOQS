@@ -2,6 +2,8 @@ package io.voqs;
 
 import com.raylib.Raylib;
 
+import static io.voqs.BlockRegistry.visibleBlocks;
+
 public class Player {
     public int x, y;
     private float stepTime;
@@ -26,38 +28,46 @@ public class Player {
 
         boolean canMove = stepTime <= 0;
 
-        if (Raylib.IsKeyDown(Raylib.KEY_W) && canMove){
+        if (KeyInput.isKeyHeld("W") && canMove){
             y -= 1;
             stepTime = 0.1f;
         }
 
-        if (Raylib.IsKeyDown(Raylib.KEY_S) && canMove){
+        if (KeyInput.isKeyHeld("S") && canMove){
             y += 1;
             stepTime = 0.1f;
         }
 
-        if (Raylib.IsKeyDown(Raylib.KEY_A) && canMove){
+        if (KeyInput.isKeyHeld("A") && canMove){
             x -= 1;
             stepTime = 0.1f;
         }
 
-        if (Raylib.IsKeyDown(Raylib.KEY_D) && canMove){
+        if (KeyInput.isKeyHeld("D") && canMove){
             x += 1;
             stepTime = 0.1f;
         }
 
 
 
-        if (Raylib.IsKeyDown(Raylib.KEY_E)){
-            world.place_block(x, y, (String) visibleBlocks.keySet().toArray()[currentBlockIndex]);
+        if (KeyInput.isKeyHeld("E")){
+            world.place_block(x, y, getHolding());
         }
 
-        else if (Raylib.IsKeyDown(Raylib.KEY_Q)){
+        else if (KeyInput.isKeyHeld("Q")){
             world.remove_block(x, y);
         }
 
-        if (Raylib.IsKeyPressed(Raylib.KEY_Z)){
+        if (KeyInput.wasKeyPressed("Z")){
             currentBlockIndex++;
         }
+    }
+
+    public String getHolding(){
+        var visibleBlocksArray = visibleBlocks.keySet().toArray();
+
+        if (currentBlockIndex >= visibleBlocks.size()) currentBlockIndex = visibleBlocks.size() - 1;
+
+        return (String) visibleBlocksArray[currentBlockIndex];
     }
 }

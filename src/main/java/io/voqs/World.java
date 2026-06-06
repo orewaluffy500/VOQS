@@ -3,14 +3,13 @@ package io.voqs;
 import com.raylib.Colors;
 import com.raylib.Helpers;
 import com.raylib.Raylib;
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 
 class Chunk {
-    protected Block[] blocks = new Block[Globals.CHUNK_SIZE * Globals.CHUNK_SIZE];
+    protected Block[] blocks = new Block[VGlobals.CHUNK_SIZE * VGlobals.CHUNK_SIZE];
     protected Raylib.Vector2 position;
 
     public Chunk(int x, int y){
@@ -19,11 +18,11 @@ class Chunk {
 
     public int index(int localX, int localY){
         if (
-                localX < 0 || localX >= Globals.CHUNK_SIZE ||
-                        localY < 0 || localY >= Globals.CHUNK_SIZE
+                localX < 0 || localX >= VGlobals.CHUNK_SIZE ||
+                        localY < 0 || localY >= VGlobals.CHUNK_SIZE
         ) return -1;
 
-        return localX + localY * Globals.CHUNK_SIZE;
+        return localX + localY * VGlobals.CHUNK_SIZE;
     }
 
     public Block get_block(int localX, int localY){
@@ -67,21 +66,21 @@ public class World {
     }
 
     private Block get_block(int x, int y){
-        int chunkX = Math.floorDiv(x, Globals.CHUNK_SIZE);
-        int chunkY = Math.floorDiv(y, Globals.CHUNK_SIZE);
+        int chunkX = Math.floorDiv(x, VGlobals.CHUNK_SIZE);
+        int chunkY = Math.floorDiv(y, VGlobals.CHUNK_SIZE);
 
-        int localX = Math.floorMod(x, Globals.CHUNK_SIZE);
-        int localY = Math.floorMod(y, Globals.CHUNK_SIZE);
+        int localX = Math.floorMod(x, VGlobals.CHUNK_SIZE);
+        int localY = Math.floorMod(y, VGlobals.CHUNK_SIZE);
 
         return chunks.get(chunkKey(chunkX, chunkY)).get_block(localX, localY);
     }
 
     private void set_block(int x, int y, Block block, boolean safe){
-        int chunkX = Math.floorDiv(x, Globals.CHUNK_SIZE);
-        int chunkY = Math.floorDiv(y, Globals.CHUNK_SIZE);
+        int chunkX = Math.floorDiv(x, VGlobals.CHUNK_SIZE);
+        int chunkY = Math.floorDiv(y, VGlobals.CHUNK_SIZE);
 
-        int localX = Math.floorMod(x, Globals.CHUNK_SIZE);
-        int localY = Math.floorMod(y, Globals.CHUNK_SIZE);
+        int localX = Math.floorMod(x, VGlobals.CHUNK_SIZE);
+        int localY = Math.floorMod(y, VGlobals.CHUNK_SIZE);
 
         Chunk chunk = chunks.get(chunkKey(chunkX, chunkY));
 
@@ -124,14 +123,14 @@ public class World {
             }
         }
 
-        Raylib.DrawRectangle(player.x * Globals.CELL_SIZE, player.y * Globals.CELL_SIZE, Globals.CELL_SIZE, Globals.CELL_SIZE, Helpers.newColor(80, 255, 80, 255));
+        Raylib.DrawRectangle(player.x * VGlobals.CELL_SIZE, player.y * VGlobals.CELL_SIZE, VGlobals.CELL_SIZE, VGlobals.CELL_SIZE, Helpers.newColor(80, 255, 80, 255));
     }
 
     private ArrayList<Chunk> getChunksToRender(Raylib.Vector2 currentChunkPos) {
         ArrayList<Chunk> chunksToDraw = new ArrayList<>();
 
-        for (int x = (int) (currentChunkPos.x() - Globals.CHUNK_DRAW_DISTANCE); x <= currentChunkPos.x() + Globals.CHUNK_DRAW_DISTANCE; x++){
-            for (int y = (int) (currentChunkPos.y() - Globals.CHUNK_DRAW_DISTANCE); y <= currentChunkPos.y() + Globals.CHUNK_DRAW_DISTANCE; y++){
+        for (int x = (int) (currentChunkPos.x() - VGlobals.CHUNK_DRAW_DISTANCE); x <= currentChunkPos.x() + VGlobals.CHUNK_DRAW_DISTANCE; x++){
+            for (int y = (int) (currentChunkPos.y() - VGlobals.CHUNK_DRAW_DISTANCE); y <= currentChunkPos.y() + VGlobals.CHUNK_DRAW_DISTANCE; y++){
                 chunksToDraw.add(chunks.get(chunkKey(x,  y)));
             }
         }
@@ -144,10 +143,10 @@ public class World {
 
         Raylib.Texture texture = TextureRegistry.getTexture(block.name);
 
-        Raylib.Vector2 cellSizeV = Helpers.newVector2(Globals.CELL_SIZE, Globals.CELL_SIZE);
+        Raylib.Vector2 cellSizeV = Helpers.newVector2(VGlobals.CELL_SIZE, VGlobals.CELL_SIZE);
         Raylib.Vector2 worldPosition = Raylib.Vector2Multiply(block.position, cellSizeV);
 
-        Raylib.Rectangle sourceRectangle = Helpers.newRectangle(0, 0, Globals.CELL_SIZE, Globals.CELL_SIZE);
+        Raylib.Rectangle sourceRectangle = Helpers.newRectangle(0, 0, VGlobals.CELL_SIZE, VGlobals.CELL_SIZE);
 
         if (!Raylib.IsTextureValid(texture)){
             Raylib.DrawRectangleV(worldPosition, cellSizeV, fallBackColor);
@@ -164,15 +163,15 @@ public class World {
 
     private static void renderChunkBorders(Chunk chunk) {
         int chunkWorldX =
-                (int)(chunk.position.x() * Globals.CHUNK_SIZE * Globals.CELL_SIZE);
+                (int)(chunk.position.x() * VGlobals.CHUNK_SIZE * VGlobals.CELL_SIZE);
 
         int chunkWorldY =
-                (int)(chunk.position.y() * Globals.CHUNK_SIZE * Globals.CELL_SIZE);
+                (int)(chunk.position.y() * VGlobals.CHUNK_SIZE * VGlobals.CELL_SIZE);
 
 
         Raylib.DrawRectangleLines(
                 chunkWorldX, chunkWorldY,
-                Globals.CHUNK_SIZE * Globals.CELL_SIZE, Globals.CHUNK_SIZE * Globals.CELL_SIZE,
+                VGlobals.CHUNK_SIZE * VGlobals.CELL_SIZE, VGlobals.CHUNK_SIZE * VGlobals.CELL_SIZE,
                 Helpers.newColor(255, 255, 255, 8)
         );
     }
