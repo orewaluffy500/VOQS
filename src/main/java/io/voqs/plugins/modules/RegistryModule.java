@@ -1,7 +1,6 @@
 package io.voqs.plugins.modules;
 
 import io.voqs.blocks.BlockRegistry;
-import io.voqs.globals.SystemErrorMan;
 import io.voqs.plugins.PluginAPIBuilder;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
@@ -17,18 +16,13 @@ public class RegistryModule implements LuaModule {
         moduleTable.set("Register", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                LuaValue lName = args.arg(1);
-                LuaValue lColor = args.arg(2);
-                LuaValue lTexName = args.arg(3);
-
-                if (SystemErrorMan.LuaErrors.checkInvalidArgs(new LuaValue[]{lName, lColor, lTexName}, LuaValue.TSTRING, LuaValue.TTABLE, LuaValue.TSTRING)) return LuaValue.NONE;
-
-                String name = lName.tojstring();
-                String texName = lTexName.tojstring();
+                String name = args.checkjstring(1);
+                LuaValue lColor = args.checktable(2);
+                String texName = args.checkjstring(3);
 
                 if (texName.contains("..") || !texName.startsWith("block")) return LuaValue.NONE;
 
-                BlockRegistry.registerBlock(name, texName, BlockRegistry.lua2Raylib(lColor));
+                BlockRegistry.registerBlock(this.name, texName, BlockRegistry.lua2Raylib(lColor));
 
                 return LuaValue.TRUE;
             }
@@ -38,10 +32,7 @@ public class RegistryModule implements LuaModule {
         moduleTable.set("Deregister", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                LuaValue lName = args.arg(1);
-                if (!lName.isstring()) return LuaValue.NONE;
-
-                String name = lName.tojstring();
+                String name = args.checkjstring(1);
 
                 BlockRegistry.unregisterBlock(name);
 
@@ -52,9 +43,7 @@ public class RegistryModule implements LuaModule {
         moduleTable.set("IsRegistered", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue arg) {
-                if (!arg.isstring()) return LuaValue.valueOf(false);
-
-                String name = arg.tojstring();
+                String name = arg.checkjstring();
 
                 return LuaValue.valueOf(BlockRegistry.isRegistered(name));
             }

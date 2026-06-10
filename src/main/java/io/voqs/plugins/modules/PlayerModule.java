@@ -1,6 +1,5 @@
 package io.voqs.plugins.modules;
 
-import io.voqs.globals.SystemErrorMan;
 import io.voqs.plugins.PluginAPIBuilder;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
@@ -27,13 +26,11 @@ public class PlayerModule implements LuaModule {
         moduleTable.set("TeleportTo", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                LuaValue x = args.arg(1);
-                LuaValue y = args.arg(2);
+                int x = args.checkint(1);
+                int y = args.checkint(2);
 
-                if (SystemErrorMan.LuaErrors.checkInvalidArgs(new LuaValue[]{x, y}, LuaValue.TINT, LuaValue.TINT)) return LuaValue.NONE;
-
-                builder.player.x = x.toint();
-                builder.player.y = y.toint();
+                builder.player.x = x;
+                builder.player.y = y;
 
                 return LuaValue.TRUE;
             }
@@ -49,10 +46,8 @@ public class PlayerModule implements LuaModule {
         moduleTable.set("SelectBlock", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                LuaValue name = args.arg(1);
-                if (!name.isstring()) return LuaValue.NONE;
 
-                builder.player.setHolding(name.tojstring());
+                builder.player.setHolding(args.checkjstring(1));
 
                 return LuaValue.TRUE;
             }
@@ -62,9 +57,8 @@ public class PlayerModule implements LuaModule {
         moduleTable.set("Meta", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue arg) {
-                if (!arg.isstring()) return LuaValue.NONE;
 
-                return builder.player.metadata.metaValueLua(arg.tojstring());
+                return builder.player.metadata.metaValueLua(arg.checkjstring());
             }
         });
 

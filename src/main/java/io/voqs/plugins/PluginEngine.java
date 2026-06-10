@@ -1,5 +1,6 @@
 package io.voqs.plugins;
 
+import io.voqs.blocks.Block;
 import io.voqs.world.Player;
 import io.voqs.world.World;
 import org.luaj.vm2.Globals;
@@ -73,28 +74,35 @@ public class PluginEngine {
         plugins.forEach((s, regularPlugin) -> regularPlugin.runCallback(regularPlugin.exitCallback));
     }
 
-    public void runBlockPlacedCallback(String name, int x, int y){
+    public void runBlockPlacedCallback(Block block){
+
+        String name = block.getName();
+
         if (!blockPlugins.containsKey(name)) return;
 
         for (BlockPlugin plug : blockPlugins.get(name)){
-            plug.runCallback(plug.placedCallback, LuaValue.valueOf(x), LuaValue.valueOf(y));
+            plug.runCallback(plug.placedCallback, LuaValue.valueOf(block.getPosition().x()), LuaValue.valueOf(block.getPosition().y()));
         }
     }
 
-    public LuaValue runBlockBreakingCallback(String name, int x, int y){
+    public LuaValue runBlockBreakingCallback(Block block){
+        String name = block.getName();
+
         if (!blockPlugins.containsKey(name)) return LuaValue.NONE;
 
         for (BlockPlugin plug : blockPlugins.get(name)){
-            return plug.runCallback(plug.breakingCallback, LuaValue.valueOf(x), LuaValue.valueOf(y));
+            return plug.runCallback(plug.breakingCallback, LuaValue.valueOf(block.getPosition().x()), LuaValue.valueOf(block.getPosition().y()));
         }
         return LuaValue.NONE;
     }
 
-    public void runBlockPulse(String name, int x, int y){
+    public void runBlockPulse(Block block){
+        String name = block.getName();
+
         if (!blockPlugins.containsKey(name)) return;
 
         for (BlockPlugin plug : blockPlugins.get(name)){
-            plug.runCallback(plug.blockPulseCallback, LuaValue.valueOf(x), LuaValue.valueOf(y));
+            plug.runCallback(plug.blockPulseCallback, LuaValue.valueOf(block.getPosition().x()), LuaValue.valueOf(block.getPosition().y()));
         }
     }
 }

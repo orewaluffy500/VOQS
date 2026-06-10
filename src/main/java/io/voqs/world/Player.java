@@ -1,18 +1,25 @@
 package io.voqs.world;
 
+import com.raylib.Helpers;
 import com.raylib.Raylib;
 import io.voqs.blocks.BlockRegistry;
 import io.voqs.globals.KeyInput;
+import io.voqs.globals.VGlobals;
 import io.voqs.plugins.Metadata;
 
 import java.util.Arrays;
 
 public class Player {
     public int x, y;
+    public int cx, cy;
+
+    private Raylib.Camera2D camera;
+
     public float stepTime;
     private final World world;
     public int currentBlockIndex = 0;
     public Metadata metadata;
+
 
     public Player(World w){
         x = 5;
@@ -23,7 +30,9 @@ public class Player {
     }
 
     public void update(){
-        var visibleBlocks = BlockRegistry.getVisibleBlocks();
+        if (camera == null){
+            makeCamera();
+        }
 
         if (currentBlockIndex >= BlockRegistry.getVisibleBlocks().size()){
             currentBlockIndex = 0;
@@ -59,18 +68,53 @@ public class Player {
         }
 
 
+        Raylib.Vector2 mouseWorld =
+                Raylib.GetScreenToWorld2D(
+                        Helpers.newVector2(
+                                Raylib.GetMouseX(),
+                                Raylib.GetMouseY()
+                        ),
+                        camera
+                );
 
-        if (KeyInput.isKeyHeld("E")){
-            world.placeBlock(x, y, getHolding());
+        cx = (int)(mouseWorld.x() / VGlobals.getCellSize());
+        cy = (int)(mouseWorld.y() / VGlobals.getCellSize());
+
+        camera.target().x(VGlobals.toWorldSpace(x) + VGlobals.getCellSize() / 2.0f);
+        camera.target().y(VGlobals.toWorldSpace(y) + VGlobals.getCellSize() / 2.0f);
+
+        int dx = cx - x;
+        int dy = cy - y;
+
+        if (dx >= VGlobals.getPlayerReach()) cx     = x +  VGlobals.getPlayerReach();
+        if (dx <= -VGlobals.getPlayerReach()) cx    = x -  VGlobals.getPlayerReach();
+        if (dy >= VGlobals.getPlayerReach()) cy     = y +  VGlobals.getPlayerReach();
+        if (dy <= -VGlobals.getPlayerReach()) cy    = y -  VGlobals.getPlayerReach();
+
+
+        if (Raylib.IsMouseButtonDown(Raylib.MOUSE_BUTTON_RIGHT)){
+            world.placeBlock(cx, cy, getHolding());
         }
 
-        else if (KeyInput.isKeyHeld("Q")){
-            world.removeBlock(x, y);
+        if (Raylib.IsMouseButtonDown(Raylib.MOUSE_BUTTON_LEFT)){
+            world.removeBlock(cx, cy);
         }
 
         if (KeyInput.wasKeyPressed("Z")){
             currentBlockIndex++;
         }
+    }
+
+    private void makeCamera() {
+        camera = new Raylib.Camera2D();
+        camera.offset(Helpers.newVector2(Raylib.GetScreenWidth() / 2.0f, Raylib.GetScreenHeight() / 2.0f));
+        System.out.println(
+                "target=(" + camera.target().x() + ", " + camera.target().y() + ")" +
+                        " offset=(" + camera.offset().x() + ", " + camera.offset().y() + ")"
+        );
+
+        camera.zoom(1.0f);
+        camera.rotation(0.0f);
     }
 
     public String getHolding(){
@@ -88,5 +132,9 @@ public class Player {
         if (index == -1) return;
 
         currentBlockIndex = index;
+    }
+
+    public Raylib.Camera2D getCamera() {
+        return camera;
     }
 }

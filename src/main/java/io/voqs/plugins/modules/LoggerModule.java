@@ -14,7 +14,7 @@ public class LoggerModule implements LuaModule {
         moduleTable.set("Notify", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue arg) {
-                System.out.println("[NOTIFIC] " + arg.toString());
+                System.out.println("[NOTIFIC] " + arg.checkjstring());
                 return null;
             }
         });
@@ -22,7 +22,7 @@ public class LoggerModule implements LuaModule {
         moduleTable.set("Error", new TwoArgFunction() {
             @Override
             public LuaValue call(LuaValue cause, LuaValue arg) {
-                System.out.printf("[ERROR] %s :: %s%n", cause.tostring(), arg.tostring());
+                System.out.printf("[ERROR] %s :: %s%n", cause.checkjstring(), arg.checkjstring());
                 return null;
             }
         });
@@ -30,7 +30,7 @@ public class LoggerModule implements LuaModule {
         moduleTable.set("Warn", new TwoArgFunction() {
             @Override
             public LuaValue call(LuaValue cause, LuaValue arg) {
-                System.out.printf("[WARN] %s :: %s%n", cause.tostring(), arg.tostring());
+                System.out.printf("[WARN] %s :: %s%n", cause.checkjstring(), arg.checkjstring());
                 return null;
             }
         });

@@ -1,6 +1,6 @@
 package io.voqs.plugins.modules;
 
-import io.voqs.globals.SystemErrorMan;
+import io.voqs.blocks.Block;
 import io.voqs.plugins.PluginAPIBuilder;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
@@ -16,17 +16,12 @@ public class WorldModule implements LuaModule {
         worldTable.set("Place", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                if (args.narg() < 3) {
-                    return LuaValue.NONE;
-                }
+                int x = args.checkint(1);
+                int y = args.checkint(2);
 
-                LuaValue x = args.arg(1);
-                LuaValue y = args.arg(2);
-                LuaValue name = args.arg(3);
+                String name = args.checkjstring(3);
 
-                if (SystemErrorMan.LuaErrors.checkInvalidArgs(new LuaValue[]{x, y, name}, LuaValue.TINT, LuaValue.TINT, LuaValue.TSTRING)) return LuaValue.NONE;
-
-                builder.world.placeBlock(x.toint(), y.toint(), name.tojstring());
+                builder.world.placeBlock(x, y, name);
 
                 return LuaValue.TRUE;
             }
@@ -35,18 +30,25 @@ public class WorldModule implements LuaModule {
         worldTable.set("Break", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                if (args.narg() < 2) {
-                    return LuaValue.NONE;
-                }
+                int x = args.checkint(1);
+                int y = args.checkint(2);
 
-                LuaValue x = args.arg(1);
-                LuaValue y = args.arg(2);
-
-                if (SystemErrorMan.LuaErrors.checkInvalidArgs(new LuaValue[]{x, y}, LuaValue.TINT, LuaValue.TINT)) return LuaValue.NONE;
-
-                builder.world.removeBlock(x.toint(), y.toint());
+                builder.world.removeBlock(x, y);
 
                 return LuaValue.TRUE;
+            }
+        });
+
+        worldTable.set("GetAt", new VarArgFunction() {
+            @Override
+            public Varargs invoke(Varargs args) {
+
+                int x = args.checkint(1);
+                int y = args.checkint(2);
+
+                Block block = builder.world.getBlock(x, y);
+
+                return LuaValue.valueOf(block.getName());
             }
         });
 

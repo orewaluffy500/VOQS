@@ -14,14 +14,14 @@ public class KeysModule implements LuaModule {
         moduleTable.set("Held", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue arg) {
-                return LuaValue.valueOf(KeyInput.isKeyHeld(arg.tojstring()));
+                return LuaValue.valueOf(KeyInput.isKeyHeld(arg.checkjstring()));
             }
         });
 
         moduleTable.set("Up", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue arg) {
-                return LuaValue.valueOf(KeyInput.isKeyUp(arg.tojstring()));
+                return LuaValue.valueOf(KeyInput.isKeyUp(arg.checkjstring()));
             }
         });
 

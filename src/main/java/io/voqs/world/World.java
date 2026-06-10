@@ -82,7 +82,7 @@ public class World {
 
         if (block == null) return;
 
-        if (handle_break_misc(block)) return;
+        if (handle_break_misc(block)) return; // needed so it continues on both no return and true return
 
         setBlockPrivate(x, y, null, false);
     }
@@ -92,12 +92,15 @@ public class World {
     public void drawAndUpdate(boolean pulsing){
         getPlayer().update();
 
+        Raylib.BeginMode2D(player.getCamera());
+
+
         Raylib.Vector2 currentChunkPos = block2Chunk(getPlayer().x, getPlayer().y);
 
         ArrayList<Chunk> chunksToDraw = getChunksToRender(currentChunkPos);
 
         for (Chunk chunk : chunksToDraw){
-            renderChunkBorders(chunk);
+            renderChunkDecor(chunk);
 
             for (Block block : chunk.blocks){
                 if (block == null) continue;
@@ -108,7 +111,7 @@ public class World {
         }
 
         for (Chunk chunk : spawnChunks){
-            renderChunkBorders(chunk);
+            renderChunkDecor(chunk);
 
 
             for (Block block : chunk.blocks){
@@ -119,11 +122,25 @@ public class World {
             }
         }
 
-        Raylib.DrawRectangle(getPlayer().x * VGlobals.getCellSize(), getPlayer().y * VGlobals.getCellSize(), VGlobals.getCellSize(), VGlobals.getCellSize(), Helpers.newColor(80, 255, 80, 255));
+        renderPlayer();
+
+        Raylib.EndMode2D();
+    }
+
+    private void renderPlayer() {
+        Raylib.DrawRectangle(
+                VGlobals.toWorldSpace(getPlayer().cx),
+                VGlobals.toWorldSpace(getPlayer().cy),
+                VGlobals.getCellSize(),
+                VGlobals.getCellSize(),
+                Helpers.newColor(120, 120, 255, 100)
+        );
+
+        Raylib.DrawRectangle(VGlobals.toWorldSpace(getPlayer().x), VGlobals.toWorldSpace(getPlayer().y), VGlobals.getCellSize(), VGlobals.getCellSize(), Helpers.newColor(80, 255, 80, 255));
     }
 
     private void updateBlock(Block block, boolean pulse) {
-        if (pulse) engine.getPluginEngine().runBlockPulse(block.getName(), (int) block.getPosition().x(), (int) block.getPosition().y());
+        if (pulse) engine.getPluginEngine().runBlockPulse(block);
     }
 
     private ArrayList<Chunk> getChunksToRender(Raylib.Vector2 currentChunkPos) {
@@ -162,7 +179,7 @@ public class World {
         );
     }
 
-    private static void renderChunkBorders(Chunk chunk) {
+    private static void renderChunkDecor(Chunk chunk) {
         int chunkWorldX =
                 (int)(chunk.position.x() * VGlobals.getChunkSize() * VGlobals.getCellSize());
 
@@ -175,15 +192,17 @@ public class World {
                 VGlobals.getChunkSize() * VGlobals.getCellSize(), VGlobals.getChunkSize() * VGlobals.getCellSize(),
                 Helpers.newColor(255, 255, 255, 8)
         );
+
+        Raylib.DrawText(Math.round(chunk.position.x()) + ", " + Math.round(chunk.position.y()), chunkWorldX + 2, chunkWorldY + 2, 8, Helpers.newColor(230, 230, 230, 70));
     }
 
 
     private boolean handle_break_misc(Block block) {
-        return engine.getPluginEngine().runBlockBreakingCallback(block.getName(), (int) block.getPosition().x(), (int) block.getPosition().y()).toboolean();
+        return engine.getPluginEngine().runBlockBreakingCallback(block).toboolean();
     }
 
     private void handle_place_misc(Block block){
-        engine.getPluginEngine().runBlockPlacedCallback(block.getName(), (int) block.getPosition().x(), (int) block.getPosition().y());
+        engine.getPluginEngine().runBlockPlacedCallback(block);
     }
 
     public Block getBlock(int x, int y){
