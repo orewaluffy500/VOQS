@@ -6,12 +6,15 @@ import io.voqs.plugins.PluginEngine;
 import io.voqs.world.World;
 
 public class GameEngine {
+
+    private float pulseTimer;
+
     public GameEngine(int width, int height, int fps, String title) {
         this.width = width;
         this.height = height;
         this.fps = fps;
         this.title = title;
-        this.world = new World();
+        this.world = new World(this);
         this.pluginEngine = new PluginEngine(world);
 
         initialize();
@@ -20,6 +23,7 @@ public class GameEngine {
     }
 
     private void initialize(){
+        Raylib.SetTraceLogLevel(Raylib.LOG_ERROR);
         Raylib.InitWindow(width, height, title);
         Raylib.SetTargetFPS(fps);
     }
@@ -29,7 +33,7 @@ public class GameEngine {
 
         Raylib.BeginDrawing();
 
-        world.draw();
+        world.drawAndUpdate(pulseTimer <= 0f);
         Raylib.DrawText(Integer.toString(Raylib.GetFPS()), 2, 2, 16, Colors.RAYWHITE);
         Raylib.EndDrawing();
     }
@@ -37,13 +41,13 @@ public class GameEngine {
     public void gameloop(){
         pluginEngine.runOnceCallback();
 
-        float timer = 0f;
+        pulseTimer = 0f;
 
         while (!Raylib.WindowShouldClose()){
-            timer += Raylib.GetFrameTime();
+            pulseTimer += Raylib.GetFrameTime();
 
-            if (timer >= (1.0f / VGlobals.PULSE_RATE)){
-                timer = 0;
+            if (pulseTimer >= (1.0f / VGlobals.getPulseRate())){
+                pulseTimer = 0;
                 pluginEngine.runPulseCallback();
             }
 
@@ -64,6 +68,11 @@ public class GameEngine {
     private final int width, height, fps;
     private final String title;
     private final World world;
+
+    public PluginEngine getPluginEngine() {
+        return pluginEngine;
+    }
+
     private final PluginEngine pluginEngine;
 
     private Raylib.Color backgroundColor = Colors.RAYWHITE;

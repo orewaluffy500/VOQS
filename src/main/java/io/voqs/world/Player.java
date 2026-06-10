@@ -7,8 +7,6 @@ import io.voqs.plugins.Metadata;
 
 import java.util.Arrays;
 
-import static io.voqs.blocks.BlockRegistry.visibleBlocks;
-
 public class Player {
     public int x, y;
     public float stepTime;
@@ -25,32 +23,37 @@ public class Player {
     }
 
     public void update(){
-        var visibleBlocks = BlockRegistry.visibleBlocks;
+        var visibleBlocks = BlockRegistry.getVisibleBlocks();
 
-        if (currentBlockIndex >= visibleBlocks.size()){
+        if (currentBlockIndex >= BlockRegistry.getVisibleBlocks().size()){
             currentBlockIndex = 0;
         }
 
         if (stepTime > 0) stepTime -= Raylib.GetFrameTime();
 
+        boolean isUpEmpty =     world.getBlock(x, y - 1) == null;
+        boolean isDownEmpty =   world.getBlock(x, y + 1) == null;
+        boolean isLeftEmpty =   world.getBlock(x - 1, y) == null;
+        boolean isRightEmpty =  world.getBlock(x + 1, y) == null;
+
         boolean canMove = stepTime <= 0;
 
-        if (KeyInput.isKeyHeld("W") && canMove){
+        if (KeyInput.isKeyHeld("W") && canMove && isUpEmpty){
             y -= 1;
             stepTime = 0.1f;
         }
 
-        if (KeyInput.isKeyHeld("S") && canMove){
+        if (KeyInput.isKeyHeld("S") && canMove && isDownEmpty){
             y += 1;
             stepTime = 0.1f;
         }
 
-        if (KeyInput.isKeyHeld("A") && canMove){
+        if (KeyInput.isKeyHeld("A") && canMove && isLeftEmpty){
             x -= 1;
             stepTime = 0.1f;
         }
 
-        if (KeyInput.isKeyHeld("D") && canMove){
+        if (KeyInput.isKeyHeld("D") && canMove && isRightEmpty){
             x += 1;
             stepTime = 0.1f;
         }
@@ -58,11 +61,11 @@ public class Player {
 
 
         if (KeyInput.isKeyHeld("E")){
-            world.place_block(x, y, getHolding());
+            world.placeBlock(x, y, getHolding());
         }
 
         else if (KeyInput.isKeyHeld("Q")){
-            world.remove_block(x, y);
+            world.removeBlock(x, y);
         }
 
         if (KeyInput.wasKeyPressed("Z")){
@@ -71,17 +74,18 @@ public class Player {
     }
 
     public String getHolding(){
-        var visibleBlocksArray = visibleBlocks.keySet().toArray();
+        var visibleBlocksArray = BlockRegistry.getVisibleBlocks().keySet().toArray();
 
-        if (currentBlockIndex >= visibleBlocks.size()) currentBlockIndex = visibleBlocks.size() - 1;
+        if (currentBlockIndex >= BlockRegistry.getVisibleBlocks().size()) currentBlockIndex = BlockRegistry.getVisibleBlocks().size() - 1;
 
         return (String) visibleBlocksArray[currentBlockIndex];
     }
 
     public void setHolding(String name){
-        var visibleBlockNames = visibleBlocks.keySet().toArray();
+        var visibleBlockNames = BlockRegistry.getVisibleBlocks().keySet().toArray();
 
         var index = Arrays.stream(visibleBlockNames).toList().indexOf(name);
+        if (index == -1) return;
 
         currentBlockIndex = index;
     }

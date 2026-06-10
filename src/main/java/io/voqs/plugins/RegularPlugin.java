@@ -14,9 +14,11 @@ public class RegularPlugin {
         this.exitCallback = env.get("Exit");
     }
 
-    public void runCallback(LuaValue callback){
+    public LuaValue runCallback(LuaValue callback, LuaValue... args){
         if (!callback.isnil()){
-            callback.call();
+            return callback.invoke(LuaValue.varargsOf(args)).arg1();
         }
+
+        return LuaValue.NONE;
     }
 }

@@ -10,19 +10,18 @@ import org.luaj.vm2.lib.jse.JsePlatform;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class PluginEngine {
     private final Globals globals = JsePlatform.standardGlobals();
     private final HashMap<String, RegularPlugin> plugins = new HashMap<>();
-    private final World world;
-    private final Player player;
+    private final HashMap<String, ArrayList<BlockPlugin>> blockPlugins = new HashMap<>();
 
     public PluginEngine(World world1){
-        world = world1;
-        player = world.player;
+        Player player = world1.getPlayer();
 
-        new PluginAPIBuilder(globals, world, player).initializeAPI();
+        new PluginAPIBuilder(globals, world1, player).initializeAPI();
     }
 
     public void loadScript(String path) {
@@ -43,6 +42,20 @@ public class PluginEngine {
         LuaValue chunk = globals.load(code, "script", env);
         chunk.call();
 
+        // Check if its a block script or regular script
+        LuaValue blockId = env.get("BlockId");
+
+        if (!blockId.isnil() && blockId.isstring()){
+            BlockPlugin plug = new BlockPlugin(env);
+
+            String id = blockId.tojstring();
+
+            blockPlugins.putIfAbsent(id, new ArrayList<>());
+            blockPlugins.get(id).add(plug);
+
+            plugins.put(String.valueOf(pathInst.getFileName()), plug);
+        }
+
         plugins.put(String.valueOf(pathInst.getFileName()), new RegularPlugin(env));
     }
 
@@ -58,5 +71,30 @@ public class PluginEngine {
 
     public void runExitCallback(){
         plugins.forEach((s, regularPlugin) -> regularPlugin.runCallback(regularPlugin.exitCallback));
+    }
+
+    public void runBlockPlacedCallback(String name, int x, int y){
+        if (!blockPlugins.containsKey(name)) return;
+
+        for (BlockPlugin plug : blockPlugins.get(name)){
+            plug.runCallback(plug.placedCallback, LuaValue.valueOf(x), LuaValue.valueOf(y));
+        }
+    }
+
+    public LuaValue runBlockBreakingCallback(String name, int x, int y){
+        if (!blockPlugins.containsKey(name)) return LuaValue.NONE;
+
+        for (BlockPlugin plug : blockPlugins.get(name)){
+            return plug.runCallback(plug.breakingCallback, LuaValue.valueOf(x), LuaValue.valueOf(y));
+        }
+        return LuaValue.NONE;
+    }
+
+    public void runBlockPulse(String name, int x, int y){
+        if (!blockPlugins.containsKey(name)) return;
+
+        for (BlockPlugin plug : blockPlugins.get(name)){
+            plug.runCallback(plug.blockPulseCallback, LuaValue.valueOf(x), LuaValue.valueOf(y));
+        }
     }
 }

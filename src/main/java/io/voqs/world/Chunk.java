@@ -6,7 +6,7 @@ import io.voqs.blocks.Block;
 import io.voqs.globals.VGlobals;
 
 class Chunk {
-    protected Block[] blocks = new Block[VGlobals.CHUNK_SIZE * VGlobals.CHUNK_SIZE];
+    protected Block[] blocks = new Block[VGlobals.getChunkSize() * VGlobals.getChunkSize()];
     protected Raylib.Vector2 position;
 
     public Chunk(int x, int y) {
@@ -15,11 +15,11 @@ class Chunk {
 
     public int index(int localX, int localY) {
         if (
-                localX < 0 || localX >= VGlobals.CHUNK_SIZE ||
-                        localY < 0 || localY >= VGlobals.CHUNK_SIZE
+                localX < 0 || localX >= VGlobals.getChunkSize() ||
+                        localY < 0 || localY >= VGlobals.getChunkSize()
         ) return -1;
 
-        return localX + localY * VGlobals.CHUNK_SIZE;
+        return localX + localY * VGlobals.getChunkSize();
     }
 
     public Block get_block(int localX, int localY) {

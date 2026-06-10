@@ -3,6 +3,7 @@ package io.voqs.world;
 import com.raylib.Colors;
 import com.raylib.Helpers;
 import com.raylib.Raylib;
+import io.voqs.GameEngine;
 import io.voqs.blocks.Block;
 import io.voqs.globals.TextureRegistry;
 import io.voqs.globals.VGlobals;
@@ -13,10 +14,19 @@ import java.util.HashMap;
 
 public class World {
     protected HashMap<Long, Chunk> chunks = new HashMap<>();
-    public Player player;
+    private Player player;
+    protected final GameEngine engine;
+    private final Chunk[] spawnChunks = new Chunk[4];
 
-    public World(){
-         player = new Player(this);
+    public World(GameEngine engine){
+        this.engine = engine;
+
+        setPlayer(new Player(this));
+
+        spawnChunks[0] = chunks.get(chunkKey(1, 0));
+        spawnChunks[1] = chunks.get(chunkKey(0, 1));
+        spawnChunks[2] = chunks.get(chunkKey(0, 0));
+        spawnChunks[3] = chunks.get(chunkKey(1, 1));
     }
 
     public long chunkKey(int chunkX, int chunkY){
@@ -27,51 +37,62 @@ public class World {
         return key;
     }
 
-    private Block get_block(int x, int y){
-        int chunkX = Math.floorDiv(x, VGlobals.CHUNK_SIZE);
-        int chunkY = Math.floorDiv(y, VGlobals.CHUNK_SIZE);
-
-        int localX = Math.floorMod(x, VGlobals.CHUNK_SIZE);
-        int localY = Math.floorMod(y, VGlobals.CHUNK_SIZE);
-
-        return chunks.get(chunkKey(chunkX, chunkY)).get_block(localX, localY);
+    private Raylib.Vector2 block2Chunk(int x, int y){
+        return Helpers.newVector2(Math.floorDiv(x, VGlobals.getChunkSize()), Math.floorDiv(y, VGlobals.getChunkSize()));
     }
 
-    private void set_block(int x, int y, Block block, boolean safe){
-        int chunkX = Math.floorDiv(x, VGlobals.CHUNK_SIZE);
-        int chunkY = Math.floorDiv(y, VGlobals.CHUNK_SIZE);
+    private Raylib.Vector2 block2ChunkLocal(int x, int y){
+        return Helpers.newVector2(Math.floorMod(x, VGlobals.getChunkSize()), Math.floorMod(y, VGlobals.getChunkSize()));
+    }
 
-        int localX = Math.floorMod(x, VGlobals.CHUNK_SIZE);
-        int localY = Math.floorMod(y, VGlobals.CHUNK_SIZE);
+    private Block getBlockPrivate(int x, int y){
+        Raylib.Vector2 chunkPos = block2Chunk(x, y);
+        Raylib.Vector2 chunkLocalPos = block2ChunkLocal(x, y);
 
-        Chunk chunk = chunks.get(chunkKey(chunkX, chunkY));
+
+        return chunks.get(chunkKey((int) chunkPos.x(), (int) chunkPos.y())).get_block((int) chunkLocalPos.x(), (int) chunkLocalPos.y());
+    }
+
+    private void setBlockPrivate(int x, int y, Block block, boolean safe){
+        Raylib.Vector2 chunkPos = block2Chunk(x, y);
+        Raylib.Vector2 chunkLocalPos = block2ChunkLocal(x, y);
+
+
+        Chunk chunk = chunks.get(chunkKey((int) chunkPos.x(), (int) chunkPos.y()));
 
         if (safe){
-            chunk.set_block_safe(localX, localY, block);
+            chunk.set_block_safe((int) chunkLocalPos.x(), (int) chunkLocalPos.y(), block);
             return;
         }
 
-        chunk.set_block(localX, localY, block);
+        chunk.set_block((int) chunkLocalPos.x(), (int) chunkLocalPos.y(), block);
     }
 
+    public void placeBlock(int x, int y, String name){
+        if (getBlockPrivate(x, y) != null) return;
 
-
-
-    public void place_block(int x, int y, String name){
         Block block = new Block(Helpers.newVector2((float) x, (float) y), name);
 
-        set_block(x, y, block, true);
+        setBlockPrivate(x, y, block, true);
+        handle_place_misc(block);
     }
 
-    public void remove_block(int x, int y){
-        set_block(x, y, null, false);
+    public void removeBlock(int x, int y){
+        Block block = getBlockPrivate(x, y);
+
+        if (block == null) return;
+
+        if (handle_break_misc(block)) return;
+
+        setBlockPrivate(x, y, null, false);
     }
 
 
-    public void draw(){
-        player.update();
 
-        Raylib.Vector2 currentChunkPos = Helpers.newVector2(0, 0);
+    public void drawAndUpdate(boolean pulsing){
+        getPlayer().update();
+
+        Raylib.Vector2 currentChunkPos = block2Chunk(getPlayer().x, getPlayer().y);
 
         ArrayList<Chunk> chunksToDraw = getChunksToRender(currentChunkPos);
 
@@ -81,18 +102,36 @@ public class World {
             for (Block block : chunk.blocks){
                 if (block == null) continue;
 
+                updateBlock(block, pulsing);
                 renderBlock(block);
             }
         }
 
-        Raylib.DrawRectangle(player.x * VGlobals.CELL_SIZE, player.y * VGlobals.CELL_SIZE, VGlobals.CELL_SIZE, VGlobals.CELL_SIZE, Helpers.newColor(80, 255, 80, 255));
+        for (Chunk chunk : spawnChunks){
+            renderChunkBorders(chunk);
+
+
+            for (Block block : chunk.blocks){
+                if (block == null) continue;
+
+                updateBlock(block, pulsing);
+                renderBlock(block);
+            }
+        }
+
+        Raylib.DrawRectangle(getPlayer().x * VGlobals.getCellSize(), getPlayer().y * VGlobals.getCellSize(), VGlobals.getCellSize(), VGlobals.getCellSize(), Helpers.newColor(80, 255, 80, 255));
+    }
+
+    private void updateBlock(Block block, boolean pulse) {
+        if (pulse) engine.getPluginEngine().runBlockPulse(block.getName(), (int) block.getPosition().x(), (int) block.getPosition().y());
     }
 
     private ArrayList<Chunk> getChunksToRender(Raylib.Vector2 currentChunkPos) {
         ArrayList<Chunk> chunksToDraw = new ArrayList<>();
 
-        for (int x = (int) (currentChunkPos.x() - VGlobals.CHUNK_DRAW_DISTANCE); x <= currentChunkPos.x() + VGlobals.CHUNK_DRAW_DISTANCE; x++){
-            for (int y = (int) (currentChunkPos.y() - VGlobals.CHUNK_DRAW_DISTANCE); y <= currentChunkPos.y() + VGlobals.CHUNK_DRAW_DISTANCE; y++){
+        for (int x = (int) (currentChunkPos.x() - VGlobals.getChunkDrawDistance()); x <= currentChunkPos.x() + VGlobals.getChunkDrawDistance(); x++){
+            for (int y = (int) (currentChunkPos.y() - VGlobals.getChunkDrawDistance()); y <= currentChunkPos.y() + VGlobals.getChunkDrawDistance(); y++){
+                if ((x == 0 || x == 1) && (y == 0 || y == 1)) continue;
                 chunksToDraw.add(chunks.get(chunkKey(x,  y)));
             }
         }
@@ -101,14 +140,14 @@ public class World {
 
     private static void renderBlock(Block block) {
 
-        Raylib.Color fallBackColor = block.fallBackColor;
+        Raylib.Color fallBackColor = block.getFallBackColor();
 
-        Raylib.Texture texture = TextureRegistry.getTexture(block.name);
+        Raylib.Texture texture = TextureRegistry.getTexture(block.getName());
 
-        Raylib.Vector2 cellSizeV = Helpers.newVector2(VGlobals.CELL_SIZE, VGlobals.CELL_SIZE);
-        Raylib.Vector2 worldPosition = Raylib.Vector2Multiply(block.position, cellSizeV);
+        Raylib.Vector2 cellSizeV = Helpers.newVector2(VGlobals.getCellSize(), VGlobals.getCellSize());
+        Raylib.Vector2 worldPosition = Raylib.Vector2Multiply(block.getPosition(), cellSizeV);
 
-        Raylib.Rectangle sourceRectangle = Helpers.newRectangle(0, 0, VGlobals.CELL_SIZE, VGlobals.CELL_SIZE);
+        Raylib.Rectangle sourceRectangle = Helpers.newRectangle(0, 0, VGlobals.getCellSize(), VGlobals.getCellSize());
 
         if (!Raylib.IsTextureValid(texture)){
             Raylib.DrawRectangleV(worldPosition, cellSizeV, fallBackColor);
@@ -125,16 +164,37 @@ public class World {
 
     private static void renderChunkBorders(Chunk chunk) {
         int chunkWorldX =
-                (int)(chunk.position.x() * VGlobals.CHUNK_SIZE * VGlobals.CELL_SIZE);
+                (int)(chunk.position.x() * VGlobals.getChunkSize() * VGlobals.getCellSize());
 
         int chunkWorldY =
-                (int)(chunk.position.y() * VGlobals.CHUNK_SIZE * VGlobals.CELL_SIZE);
+                (int)(chunk.position.y() * VGlobals.getChunkSize() * VGlobals.getCellSize());
 
 
         Raylib.DrawRectangleLines(
                 chunkWorldX, chunkWorldY,
-                VGlobals.CHUNK_SIZE * VGlobals.CELL_SIZE, VGlobals.CHUNK_SIZE * VGlobals.CELL_SIZE,
+                VGlobals.getChunkSize() * VGlobals.getCellSize(), VGlobals.getChunkSize() * VGlobals.getCellSize(),
                 Helpers.newColor(255, 255, 255, 8)
         );
+    }
+
+
+    private boolean handle_break_misc(Block block) {
+        return engine.getPluginEngine().runBlockBreakingCallback(block.getName(), (int) block.getPosition().x(), (int) block.getPosition().y()).toboolean();
+    }
+
+    private void handle_place_misc(Block block){
+        engine.getPluginEngine().runBlockPlacedCallback(block.getName(), (int) block.getPosition().x(), (int) block.getPosition().y());
+    }
+
+    public Block getBlock(int x, int y){
+        return getBlockPrivate(x, y);
+    }
+
+    public Player getPlayer() {
+        return player;
+    }
+
+    public void setPlayer(Player player) {
+        this.player = player;
     }
 }

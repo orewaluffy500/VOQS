@@ -1,8 +1,24 @@
 package io.voqs.globals;
 
 public class VGlobals {
-    public static final int CHUNK_SIZE = 16;
-    public static final int CELL_SIZE = 16;
-    public static final int CHUNK_DRAW_DISTANCE = 3;
-    public static final int PULSE_RATE = 8;
+    private static final int CHUNK_SIZE = 16;
+    private static final int CELL_SIZE = 16;
+    private static final int CHUNK_DRAW_DISTANCE = 4;
+    private static final int PULSE_RATE = 8;
+
+    public static int getChunkSize() {
+        return CHUNK_SIZE;
+    }
+
+    public static int getCellSize() {
+        return CELL_SIZE;
+    }
+
+    public static int getChunkDrawDistance() {
+        return CHUNK_DRAW_DISTANCE;
+    }
+
+    public static int getPulseRate() {
+        return PULSE_RATE;
+    }
 }
