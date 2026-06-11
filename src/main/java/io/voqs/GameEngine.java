@@ -1,13 +1,15 @@
 package io.voqs;
 import com.raylib.*;
+import io.voqs.globals.Java2LuaBridge;
 import io.voqs.globals.TextureRegistry;
-import io.voqs.globals.VGlobals;
+import io.voqs.globals.EnginePreferences;
 import io.voqs.plugins.PluginEngine;
 import io.voqs.world.World;
 
 public class GameEngine {
 
-    private float pulseTimer;
+    private float pulseTimer = 0f;
+    private int pulseIndex = 0;
 
     public GameEngine(int width, int height, int fps, String title) {
         this.width = width;
@@ -33,7 +35,7 @@ public class GameEngine {
 
         Raylib.BeginDrawing();
 
-        world.drawAndUpdate(pulseTimer <= 0f);
+        world.drawAndUpdate(getPulseTimer() <= 0f);
         Raylib.DrawText(Integer.toString(Raylib.GetFPS()), 2, 2, 16, Colors.RAYWHITE);
         Raylib.EndDrawing();
     }
@@ -41,13 +43,14 @@ public class GameEngine {
     public void gameloop(){
         pluginEngine.runOnceCallback();
 
-        pulseTimer = 0f;
-
         while (!Raylib.WindowShouldClose()){
-            pulseTimer += Raylib.GetFrameTime();
+            pulseTimer = getPulseTimer() + Raylib.GetFrameTime();
 
-            if (pulseTimer >= (1.0f / VGlobals.getPulseRate())){
+            if (getPulseTimer() >= (1.0f / EnginePreferences.getPulseRate())){
                 pulseTimer = 0;
+                pulseIndex++;
+                if (pulseIndex >= EnginePreferences.getPulseRate()) pulseIndex = 0;
+
                 pluginEngine.runPulseCallback();
             }
 
@@ -70,10 +73,11 @@ public class GameEngine {
     private final World world;
 
     public PluginEngine getPluginEngine() {
+        pluginEngine = new PluginEngine(world);
         return pluginEngine;
     }
 
-    private final PluginEngine pluginEngine;
+    private PluginEngine pluginEngine;
 
     private Raylib.Color backgroundColor = Colors.RAYWHITE;
 
@@ -99,5 +103,13 @@ public class GameEngine {
 
     public Raylib.Color getBackgroundColor() {
         return backgroundColor;
+    }
+
+    public int getPulseIndex() {
+        return pulseIndex;
+    }
+
+    public float getPulseTimer() {
+        return pulseTimer;
     }
 }

@@ -21,7 +21,9 @@ public class PluginAPIBuilder {
         globals.set("Player",   new PlayerModule().build(this));
         globals.set("Keys",     new KeysModule().build(this));
         globals.set("Registry", new RegistryModule().build(this));
-        globals.set("World",    new WorldModule().build(this));
+        globals.set("Terrain",    new TerrainModule().build(this));
+        globals.set("Clock",    new ClockModule().build(this));
+        globals.set("Modifiers",    new ModifiersModule().build(this));
     }
 
 }

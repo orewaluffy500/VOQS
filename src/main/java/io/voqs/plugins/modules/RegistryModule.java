@@ -13,7 +13,42 @@ public class RegistryModule implements LuaModule {
     public LuaTable build(PluginAPIBuilder builder) {
         LuaTable moduleTable = new LuaTable();
 
-        moduleTable.set("Register", new VarArgFunction() {
+        moduleTable.set("Register", feature_Register());
+
+
+        moduleTable.set("Deregister", feature_Deregister());
+
+        moduleTable.set("IsRegistered", feature_IsRegistered());
+
+        return moduleTable;
+    }
+
+    private static OneArgFunction feature_IsRegistered() {
+        return new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue arg) {
+                String name = arg.checkjstring();
+
+                return LuaValue.valueOf(BlockRegistry.isRegistered(name));
+            }
+        };
+    }
+
+    private static VarArgFunction feature_Deregister() {
+        return new VarArgFunction() {
+            @Override
+            public Varargs invoke(Varargs args) {
+                String name = args.checkjstring(1);
+
+                BlockRegistry.unregisterBlock(name);
+
+                return LuaValue.TRUE;
+            }
+        };
+    }
+
+    private static VarArgFunction feature_Register() {
+        return new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 String name = args.checkjstring(1);
@@ -26,29 +61,6 @@ public class RegistryModule implements LuaModule {
 
                 return LuaValue.TRUE;
             }
-        });
-
-
-        moduleTable.set("Deregister", new VarArgFunction() {
-            @Override
-            public Varargs invoke(Varargs args) {
-                String name = args.checkjstring(1);
-
-                BlockRegistry.unregisterBlock(name);
-
-                return LuaValue.TRUE;
-            }
-        });
-
-        moduleTable.set("IsRegistered", new OneArgFunction() {
-            @Override
-            public LuaValue call(LuaValue arg) {
-                String name = arg.checkjstring();
-
-                return LuaValue.valueOf(BlockRegistry.isRegistered(name));
-            }
-        });
-
-        return moduleTable;
+        };
     }
 }

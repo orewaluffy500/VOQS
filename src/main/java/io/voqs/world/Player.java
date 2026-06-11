@@ -2,9 +2,10 @@ package io.voqs.world;
 
 import com.raylib.Helpers;
 import com.raylib.Raylib;
+import io.voqs.Position;
 import io.voqs.blocks.BlockRegistry;
 import io.voqs.globals.KeyInput;
-import io.voqs.globals.VGlobals;
+import io.voqs.globals.EnginePreferences;
 import io.voqs.plugins.Metadata;
 
 import java.util.Arrays;
@@ -13,9 +14,13 @@ public class Player {
     public int x, y;
     public int cx, cy;
 
+    private Position velocity = Position.ZERO;
+
     private Raylib.Camera2D camera;
 
     public float stepTime;
+    public float blockManipulationTime;
+
     private final World world;
     public int currentBlockIndex = 0;
     public Metadata metadata;
@@ -30,6 +35,18 @@ public class Player {
     }
 
     public void update(){
+        preHandling();
+
+        handleMovement();
+
+        handleMouse();
+
+        handleCamera();
+
+        handleBlocks();
+    }
+
+    private void preHandling() {
         if (camera == null){
             makeCamera();
         }
@@ -39,35 +56,36 @@ public class Player {
         }
 
         if (stepTime > 0) stepTime -= Raylib.GetFrameTime();
+        if (blockManipulationTime > 0) blockManipulationTime -= Raylib.GetFrameTime();
+    }
 
-        boolean isUpEmpty =     world.getBlock(x, y - 1) == null;
-        boolean isDownEmpty =   world.getBlock(x, y + 1) == null;
-        boolean isLeftEmpty =   world.getBlock(x - 1, y) == null;
-        boolean isRightEmpty =  world.getBlock(x + 1, y) == null;
+    private void handleBlocks() {
+        boolean canManipulateBlocks = blockManipulationTime <= 0f;
 
-        boolean canMove = stepTime <= 0;
-
-        if (KeyInput.isKeyHeld("W") && canMove && isUpEmpty){
-            y -= 1;
-            stepTime = 0.1f;
+        if (Raylib.IsMouseButtonDown(Raylib.MOUSE_BUTTON_RIGHT) && canManipulateBlocks){
+            world.placeBlock(cx, cy, getHolding());
+            blockManipulationTime = EnginePreferences.getPlayerBuildDelay();
         }
 
-        if (KeyInput.isKeyHeld("S") && canMove && isDownEmpty){
-            y += 1;
-            stepTime = 0.1f;
+        if (Raylib.IsMouseButtonDown(Raylib.MOUSE_BUTTON_LEFT) && canManipulateBlocks){
+            world.removeBlock(cx, cy);
+            blockManipulationTime = EnginePreferences.getPlayerBuildDelay();
         }
 
-        if (KeyInput.isKeyHeld("A") && canMove && isLeftEmpty){
-            x -= 1;
-            stepTime = 0.1f;
+        if (KeyInput.wasKeyPressed("Z")){
+            currentBlockIndex++;
         }
-
-        if (KeyInput.isKeyHeld("D") && canMove && isRightEmpty){
-            x += 1;
-            stepTime = 0.1f;
-        }
+    }
 
 
+    private void handleCamera() {
+        float targetX = EnginePreferences.toWorldSpace(x) + EnginePreferences.getCellSize() / 2.0f;
+        float targetY = EnginePreferences.toWorldSpace(y) + EnginePreferences.getCellSize() / 2.0f;
+
+        camera.target(Raylib.Vector2Lerp(camera.target(), Helpers.newVector2(targetX, targetY), .1f));
+    }
+
+    private void handleMouse() {
         Raylib.Vector2 mouseWorld =
                 Raylib.GetScreenToWorld2D(
                         Helpers.newVector2(
@@ -77,41 +95,55 @@ public class Player {
                         camera
                 );
 
-        cx = (int)(mouseWorld.x() / VGlobals.getCellSize());
-        cy = (int)(mouseWorld.y() / VGlobals.getCellSize());
-
-        camera.target().x(VGlobals.toWorldSpace(x) + VGlobals.getCellSize() / 2.0f);
-        camera.target().y(VGlobals.toWorldSpace(y) + VGlobals.getCellSize() / 2.0f);
+        cx = (int)(mouseWorld.x() / EnginePreferences.getCellSize());
+        cy = (int)(mouseWorld.y() / EnginePreferences.getCellSize());
 
         int dx = cx - x;
         int dy = cy - y;
 
-        if (dx >= VGlobals.getPlayerReach()) cx     = x +  VGlobals.getPlayerReach();
-        if (dx <= -VGlobals.getPlayerReach()) cx    = x -  VGlobals.getPlayerReach();
-        if (dy >= VGlobals.getPlayerReach()) cy     = y +  VGlobals.getPlayerReach();
-        if (dy <= -VGlobals.getPlayerReach()) cy    = y -  VGlobals.getPlayerReach();
+        if (dx >= EnginePreferences.getPlayerReach()) cx     = x +  EnginePreferences.getPlayerReach();
+        if (dx <= -EnginePreferences.getPlayerReach()) cx    = x -  EnginePreferences.getPlayerReach();
+        if (dy >= EnginePreferences.getPlayerReach()) cy     = y +  EnginePreferences.getPlayerReach();
+        if (dy <= -EnginePreferences.getPlayerReach()) cy    = y -  EnginePreferences.getPlayerReach();
+    }
 
+    private void handleMovement() {
+        boolean isUpEmpty =     world.getBlock(x, y - 1) == null;
+        boolean isDownEmpty =   world.getBlock(x, y + 1) == null;
+        boolean isLeftEmpty =   world.getBlock(x - 1, y) == null;
+        boolean isRightEmpty =  world.getBlock(x + 1, y) == null;
 
-        if (Raylib.IsMouseButtonDown(Raylib.MOUSE_BUTTON_RIGHT)){
-            world.placeBlock(cx, cy, getHolding());
+        boolean canMove = stepTime <= 0;
+
+        if (KeyInput.isKeyHeld("W") && canMove && isUpEmpty){
+            velocity.set(0, -1);
         }
 
-        if (Raylib.IsMouseButtonDown(Raylib.MOUSE_BUTTON_LEFT)){
-            world.removeBlock(cx, cy);
+        if (KeyInput.isKeyHeld("S") && canMove && isDownEmpty){
+            velocity.set(0, 1);
         }
 
-        if (KeyInput.wasKeyPressed("Z")){
-            currentBlockIndex++;
+        if (KeyInput.isKeyHeld("A") && canMove && isLeftEmpty){
+            velocity.set(-1, 0);
         }
+
+        if (KeyInput.isKeyHeld("D") && canMove && isRightEmpty){
+            velocity.set(1, 0);
+        }
+
+        x += velocity.x();
+        y += velocity.y();
+
+        if (!velocity.isZero()){
+            stepTime = EnginePreferences.getPlayerStepDelay();
+        }
+
+        velocity.set(0, 0);
     }
 
     private void makeCamera() {
         camera = new Raylib.Camera2D();
         camera.offset(Helpers.newVector2(Raylib.GetScreenWidth() / 2.0f, Raylib.GetScreenHeight() / 2.0f));
-        System.out.println(
-                "target=(" + camera.target().x() + ", " + camera.target().y() + ")" +
-                        " offset=(" + camera.offset().x() + ", " + camera.offset().y() + ")"
-        );
 
         camera.zoom(1.0f);
         camera.rotation(0.0f);
@@ -136,5 +168,13 @@ public class Player {
 
     public Raylib.Camera2D getCamera() {
         return camera;
+    }
+
+    public Position getVelocity() {
+        return velocity;
+    }
+
+    public void setVelocity(Position velocity) {
+        this.velocity = velocity;
     }
 }

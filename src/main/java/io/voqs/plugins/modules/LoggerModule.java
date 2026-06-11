@@ -1,5 +1,6 @@
 package io.voqs.plugins.modules;
 
+import io.voqs.globals.Java2LuaBridge;
 import io.voqs.plugins.PluginAPIBuilder;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
@@ -11,30 +12,42 @@ public class LoggerModule implements LuaModule {
     public LuaTable build(PluginAPIBuilder builder) {
         LuaTable moduleTable = new LuaTable();
 
-        moduleTable.set("Notify", new OneArgFunction() {
-            @Override
-            public LuaValue call(LuaValue arg) {
-                System.out.println("[NOTIFIC] " + arg.checkjstring());
-                return null;
-            }
-        });
+        moduleTable.set("Notify", feature_Notify());
 
-        moduleTable.set("Error", new TwoArgFunction() {
-            @Override
-            public LuaValue call(LuaValue cause, LuaValue arg) {
-                System.out.printf("[ERROR] %s :: %s%n", cause.checkjstring(), arg.checkjstring());
-                return null;
-            }
-        });
+        moduleTable.set("Error", feature_Error());
 
-        moduleTable.set("Warn", new TwoArgFunction() {
-            @Override
-            public LuaValue call(LuaValue cause, LuaValue arg) {
-                System.out.printf("[WARN] %s :: %s%n", cause.checkjstring(), arg.checkjstring());
-                return null;
-            }
-        });
+        moduleTable.set("Warn", feature_Warn());
 
         return moduleTable;
+    }
+
+    private static TwoArgFunction feature_Warn() {
+        return new TwoArgFunction() {
+            @Override
+            public LuaValue call(LuaValue cause, LuaValue arg) {
+                Java2LuaBridge.Logger.Warn(cause.checkjstring(), arg.checkjstring());
+                return null;
+            }
+        };
+    }
+
+    private static TwoArgFunction feature_Error() {
+        return new TwoArgFunction() {
+            @Override
+            public LuaValue call(LuaValue cause, LuaValue arg) {
+                Java2LuaBridge.Logger.Error(cause.checkjstring(), arg.checkjstring());
+                return null;
+            }
+        };
+    }
+
+    private static OneArgFunction feature_Notify() {
+        return new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue arg) {
+                Java2LuaBridge.Logger.Notify(arg.checkjstring());
+                return null;
+            }
+        };
     }
 }

@@ -1,67 +1,76 @@
 package io.voqs.plugins.modules;
 
+import io.voqs.globals.Java2LuaBridge;
+import io.voqs.globals.EnginePreferences;
 import io.voqs.plugins.PluginAPIBuilder;
-import org.luaj.vm2.LuaTable;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Varargs;
+import io.voqs.plugins.PluginHelpers;
+import org.luaj.vm2.*;
 import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.VarArgFunction;
-import org.luaj.vm2.lib.ZeroArgFunction;
 
 public class PlayerModule implements LuaModule {
     @Override
     public LuaTable build(PluginAPIBuilder builder) {
         LuaTable moduleTable = new LuaTable();
 
-        moduleTable.set("GetPosition", new VarArgFunction() {
-            @Override
-            public Varargs invoke(Varargs args) {
-                return LuaValue.varargsOf(new LuaValue[] {
-                        LuaValue.valueOf(builder.player.x),
-                        LuaValue.valueOf(builder.player.y)
-                });
-            }
-        });
+        moduleTable.set("Position", valueFeature_Position(builder));
+        moduleTable.set("SelectedBlock", valueFeature_SelectedBlock(builder));
 
-        moduleTable.set("TeleportTo", new VarArgFunction() {
+        moduleTable.set("Meta", valueFeature_Meta(builder));
+
+        return moduleTable;
+    }
+
+    private static VarArgFunction valueFeature_SelectedBlock(PluginAPIBuilder builder) {
+        return new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                int x = args.checkint(1);
-                int y = args.checkint(2);
+                if (args.narg() > 0) {
+                    String block = args.checkjstring(1);
+
+                    builder.player.setHolding(block);
+                }
+
+                return LuaValue.valueOf(builder.player.getHolding());
+            }
+        };
+    }
+
+    private static VarArgFunction valueFeature_Position(PluginAPIBuilder builder) {
+        return new VarArgFunction() {
+            @Override
+            public Varargs invoke(Varargs args) {
+                if (args.narg() < 2) {
+                    return PluginHelpers.makeVarargs(builder.player.x, builder.player.y);
+                }
+
+                int x = args.toint(1);
+                int y = args.toint(2);
+
+                int dx = Math.abs(builder.player.x - x);
+                int dy = Math.abs(builder.player.y - y);
+
+                int maxTeleportDistance = EnginePreferences.getMaxTeleportDistance();
+
+                if (dx > maxTeleportDistance || dy > maxTeleportDistance) {
+                    Java2LuaBridge.Logger.Error("Maximum Distance Threshold", "Cannot teleport player farther than " + maxTeleportDistance + " blocks.");
+                    return LuaValue.NONE;
+                }
 
                 builder.player.x = x;
                 builder.player.y = y;
 
-                return LuaValue.TRUE;
+                return LuaValue.NONE;
             }
-        });
+        };
+    }
 
-        moduleTable.set("GetSelectedBlock", new ZeroArgFunction() {
-            @Override
-            public LuaValue call() {
-                return LuaValue.valueOf(builder.player.getHolding());
-            }
-        });
-
-        moduleTable.set("SelectBlock", new VarArgFunction() {
-            @Override
-            public Varargs invoke(Varargs args) {
-
-                builder.player.setHolding(args.checkjstring(1));
-
-                return LuaValue.TRUE;
-            }
-        });
-
-
-        moduleTable.set("Meta", new OneArgFunction() {
+    private static OneArgFunction valueFeature_Meta(PluginAPIBuilder builder) {
+        return new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue arg) {
-
                 return builder.player.metadata.metaValueLua(arg.checkjstring());
             }
-        });
-
-        return moduleTable;
+        };
     }
 }

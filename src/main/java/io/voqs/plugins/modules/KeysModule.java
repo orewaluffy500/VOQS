@@ -11,20 +11,28 @@ public class KeysModule implements LuaModule {
     public LuaTable build(PluginAPIBuilder builder) {
         LuaTable moduleTable = new LuaTable();
 
-        moduleTable.set("Held", new OneArgFunction() {
-            @Override
-            public LuaValue call(LuaValue arg) {
-                return LuaValue.valueOf(KeyInput.isKeyHeld(arg.checkjstring()));
-            }
-        });
+        moduleTable.set("Held", feature_Held());
 
-        moduleTable.set("Up", new OneArgFunction() {
+        moduleTable.set("Up", feature_Up());
+
+        return moduleTable;
+    }
+
+    private static OneArgFunction feature_Up() {
+        return new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue arg) {
                 return LuaValue.valueOf(KeyInput.isKeyUp(arg.checkjstring()));
             }
-        });
+        };
+    }
 
-        return moduleTable;
+    private static OneArgFunction feature_Held() {
+        return new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue arg) {
+                return LuaValue.valueOf(KeyInput.isKeyHeld(arg.checkjstring()));
+            }
+        };
     }
 }
