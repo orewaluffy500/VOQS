@@ -12,7 +12,7 @@ public class TextureRegistry {
         if (textures.containsKey(name)) return;
         if (path.contains("..")) return;
 
-        Raylib.Texture texture = Raylib.LoadTexture("./metadata/" + path);
+        Raylib.Texture texture = Raylib.LoadTexture("./game/" + path);
 
         textures.put(name, texture);
     }

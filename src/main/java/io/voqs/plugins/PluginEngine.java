@@ -4,6 +4,7 @@ import io.voqs.blocks.Block;
 import io.voqs.world.Player;
 import io.voqs.world.World;
 import org.luaj.vm2.Globals;
+import org.luaj.vm2.LoadState;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.jse.JsePlatform;
@@ -21,6 +22,7 @@ public class PluginEngine {
 
     public PluginEngine(World world1){
         Player player = world1.getPlayer();
+
 
         new PluginAPIBuilder(globals, world1, player).initializeAPI();
     }
@@ -40,7 +42,8 @@ public class PluginEngine {
         LuaTable env = new LuaTable();
         env.setmetatable(mt);
 
-        LuaValue chunk = globals.load(code, "script", env);
+        LuaValue chunk = globals.loadfile(path);
+        
         chunk.call();
 
         // Check if its a block script or regular script

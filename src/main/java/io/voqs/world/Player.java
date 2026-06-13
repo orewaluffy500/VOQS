@@ -2,19 +2,20 @@ package io.voqs.world;
 
 import com.raylib.Helpers;
 import com.raylib.Raylib;
-import io.voqs.Position;
+import io.voqs.helpers.Position;
 import io.voqs.blocks.BlockRegistry;
 import io.voqs.globals.KeyInput;
 import io.voqs.globals.EnginePreferences;
+import io.voqs.helpers.Size;
 import io.voqs.plugins.Metadata;
 
 import java.util.Arrays;
 
 public class Player {
     public int x, y;
-    public int cx, cy;
+    public Position cursorPos = Position.ZERO();
 
-    private Position velocity = Position.ZERO;
+    private Position velocity = Position.ZERO();
 
     private Raylib.Camera2D camera;
 
@@ -24,6 +25,8 @@ public class Player {
     private final World world;
     public int currentBlockIndex = 0;
     public Metadata metadata;
+
+    public Size windowSize;
 
 
     public Player(World w){
@@ -51,30 +54,40 @@ public class Player {
             makeCamera();
         }
 
+        checkResize();
+
         if (currentBlockIndex >= BlockRegistry.getVisibleBlocks().size()){
             currentBlockIndex = 0;
         }
 
-        if (stepTime > 0) stepTime -= Raylib.GetFrameTime();
-        if (blockManipulationTime > 0) blockManipulationTime -= Raylib.GetFrameTime();
+        if (stepTime > 0) stepTime -= EnginePreferences.getDeltaTime();
+        if (blockManipulationTime > 0) blockManipulationTime -= EnginePreferences.getDeltaTime();
     }
 
     private void handleBlocks() {
         boolean canManipulateBlocks = blockManipulationTime <= 0f;
 
         if (Raylib.IsMouseButtonDown(Raylib.MOUSE_BUTTON_RIGHT) && canManipulateBlocks){
-            world.placeBlock(cx, cy, getHolding());
-            blockManipulationTime = EnginePreferences.getPlayerBuildDelay();
+            placeBlock();
         }
 
         if (Raylib.IsMouseButtonDown(Raylib.MOUSE_BUTTON_LEFT) && canManipulateBlocks){
-            world.removeBlock(cx, cy);
-            blockManipulationTime = EnginePreferences.getPlayerBuildDelay();
+            breakBlock();
         }
 
         if (KeyInput.wasKeyPressed("Z")){
             currentBlockIndex++;
         }
+    }
+
+    public void breakBlock() {
+        world.removeBlock(cursorPos.x(), cursorPos.y());
+        blockManipulationTime = EnginePreferences.getPlayerBuildDelay();
+    }
+
+    public void placeBlock() {
+        world.placeBlock(cursorPos.x(), cursorPos.y(), getHolding());
+        blockManipulationTime = EnginePreferences.getPlayerBuildDelay();
     }
 
 
@@ -95,16 +108,16 @@ public class Player {
                         camera
                 );
 
-        cx = (int)(mouseWorld.x() / EnginePreferences.getCellSize());
-        cy = (int)(mouseWorld.y() / EnginePreferences.getCellSize());
+        cursorPos.x((int)(mouseWorld.x() / EnginePreferences.getCellSize()));
+        cursorPos.y((int)(mouseWorld.y() / EnginePreferences.getCellSize()));
 
-        int dx = cx - x;
-        int dy = cy - y;
+        int dx = cursorPos.x() - x;
+        int dy = cursorPos.y() - y;
 
-        if (dx >= EnginePreferences.getPlayerReach()) cx     = x +  EnginePreferences.getPlayerReach();
-        if (dx <= -EnginePreferences.getPlayerReach()) cx    = x -  EnginePreferences.getPlayerReach();
-        if (dy >= EnginePreferences.getPlayerReach()) cy     = y +  EnginePreferences.getPlayerReach();
-        if (dy <= -EnginePreferences.getPlayerReach()) cy    = y -  EnginePreferences.getPlayerReach();
+        if (dx >= EnginePreferences.getPlayerReach()) cursorPos.x(x +  EnginePreferences.getPlayerReach());
+        if (dx <= -EnginePreferences.getPlayerReach()) cursorPos.x(x -  EnginePreferences.getPlayerReach());
+        if (dy >= EnginePreferences.getPlayerReach()) cursorPos.y(y +  EnginePreferences.getPlayerReach());
+        if (dy <= -EnginePreferences.getPlayerReach()) cursorPos.y(y -  EnginePreferences.getPlayerReach());
     }
 
     private void handleMovement() {
@@ -116,23 +129,31 @@ public class Player {
         boolean canMove = stepTime <= 0;
 
         if (KeyInput.isKeyHeld("W") && canMove && isUpEmpty){
-            velocity.set(0, -1);
+            velocity.move(0, -1);
         }
 
         if (KeyInput.isKeyHeld("S") && canMove && isDownEmpty){
-            velocity.set(0, 1);
+            velocity.move(0, 1);
         }
 
         if (KeyInput.isKeyHeld("A") && canMove && isLeftEmpty){
-            velocity.set(-1, 0);
+            velocity.move(-1, 0);
         }
 
         if (KeyInput.isKeyHeld("D") && canMove && isRightEmpty){
-            velocity.set(1, 0);
+            velocity.move(1, 0);
         }
 
-        x += velocity.x();
-        y += velocity.y();
+        boolean diagonal = velocity.x() != 0 && velocity.y() != 0;
+
+        if (!diagonal) {
+            x += velocity.x();
+            y += velocity.y();
+        } else {
+            x += velocity.x();
+            y += velocity.y();
+            stepTime = EnginePreferences.getPlayerStepDelay();
+        }
 
         if (!velocity.isZero()){
             stepTime = EnginePreferences.getPlayerStepDelay();
@@ -143,10 +164,23 @@ public class Player {
 
     private void makeCamera() {
         camera = new Raylib.Camera2D();
-        camera.offset(Helpers.newVector2(Raylib.GetScreenWidth() / 2.0f, Raylib.GetScreenHeight() / 2.0f));
+
+        updateWindowSize();
+        camera.offset(Helpers.newVector2(windowSize.x() / 2.0f, windowSize.y() / 2.0f));
 
         camera.zoom(1.0f);
         camera.rotation(0.0f);
+    }
+
+    private void updateWindowSize() {
+        windowSize = new Size(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+    }
+
+    private void checkResize(){
+        if (windowSize.sum() != Raylib.GetScreenWidth() + Raylib.GetScreenHeight()){
+            updateWindowSize();
+            camera.offset(Helpers.newVector2(windowSize.x() / 2.0f, windowSize.y() / 2.0f));
+        }
     }
 
     public String getHolding(){

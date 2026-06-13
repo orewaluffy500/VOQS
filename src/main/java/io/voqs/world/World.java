@@ -4,11 +4,15 @@ import com.raylib.Colors;
 import com.raylib.Helpers;
 import com.raylib.Raylib;
 import io.voqs.GameEngine;
-import io.voqs.Position;
+import io.voqs.helpers.Color;
+import io.voqs.helpers.Flower;
+import io.voqs.helpers.Position;
 import io.voqs.blocks.Block;
 import io.voqs.globals.TextureRegistry;
 import io.voqs.globals.EnginePreferences;
+import io.voqs.helpers.Size;
 
+import java.net.CookieHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -171,22 +175,18 @@ public class World {
     }
 
     private void renderPlayer() {
-        Raylib.DrawRectangle(
-                EnginePreferences.toWorldSpace(getPlayer().cx),
-                EnginePreferences.toWorldSpace(getPlayer().cy),
-                EnginePreferences.getCellSize(),
-                EnginePreferences.getCellSize(),
-                Helpers.newColor(120, 120, 255, 100)
+        engine.drawRect(
+                getPlayer().cursorPos.mul(EnginePreferences.getCellSize()),
+                new Size(EnginePreferences.getCellSize(), EnginePreferences.getCellSize()),
+                new Color(120, 120, 255, 255)
         );
 
-        Raylib.DrawRectangle(
-                EnginePreferences.toWorldSpace(getPlayer().x),
-                EnginePreferences.toWorldSpace(getPlayer().y),
-                EnginePreferences.getCellSize(),
-                EnginePreferences.getCellSize(),
-                Helpers.newColor(80, 255, 80, 255)
-        );
 
+        engine.drawRect(
+                new Position(EnginePreferences.toWorldSpace(getPlayer().x), EnginePreferences.toWorldSpace(getPlayer().y)),
+                new Size(EnginePreferences.getCellSize(), EnginePreferences.getCellSize()),
+                new Color(255, 120, 130, 255)
+        );
     }
 
     private void updateBlock(Block block, boolean pulse) {
@@ -205,19 +205,19 @@ public class World {
         return chunksToDraw;
     }
 
-    private static void renderBlock(Block block) {
+    private void renderBlock(Block block) {
 
-        Raylib.Color fallBackColor = block.getFallBackColor();
+        Color fallBackColor = block.getFallBackColor();
 
         Raylib.Texture texture = TextureRegistry.getTexture(block.getName());
 
-        Position cellSizeV = new Position(EnginePreferences.getCellSize(), EnginePreferences.getCellSize());
+        Size cellSizeV = new Size(EnginePreferences.getCellSize(), EnginePreferences.getCellSize());
         Position worldPosition = block.getPosition().mul(cellSizeV);
 
         Raylib.Rectangle sourceRectangle = Helpers.newRectangle(0, 0, EnginePreferences.getCellSize(), EnginePreferences.getCellSize());
 
         if (!Raylib.IsTextureValid(texture)){
-            Raylib.DrawRectangleV(worldPosition.toRaylib(), cellSizeV.toRaylib(), fallBackColor);
+            engine.drawRect(worldPosition, cellSizeV, fallBackColor);
             return;
         }
 
@@ -229,7 +229,7 @@ public class World {
         );
     }
 
-    private static void renderChunkDecor(Chunk chunk) {
+    private void renderChunkDecor(Chunk chunk) {
         int chunkWorldX =
                 chunk.position.x() * EnginePreferences.getChunkSize() * EnginePreferences.getCellSize();
 
@@ -242,8 +242,20 @@ public class World {
                 EnginePreferences.getChunkSize() * EnginePreferences.getCellSize(), EnginePreferences.getChunkSize() * EnginePreferences.getCellSize(),
                 Helpers.newColor(255, 255, 255, 8)
         );
-
         Raylib.DrawText(chunk.position.x() + ", " + chunk.position.y(), chunkWorldX + 2, chunkWorldY + 2, 8, Helpers.newColor(230, 230, 230, 70));
+
+        if (chunk.flowers[0] == null) return;
+
+        for (Flower flower : chunk.flowers){
+            Position pos = chunk.getRelative(flower.pos().x(), flower.pos().y());
+            Raylib.DrawCircle(
+                    EnginePreferences.toWorldSpace(pos.x()),
+                    EnginePreferences.toWorldSpace(pos.y()),
+                    2,
+                    flower.color().toRaylib()
+            );
+        }
+
     }
 
 
@@ -280,5 +292,19 @@ public class World {
     }
 
     private void chunkCreated(Chunk chunk){
+        if (EnginePreferences.getRandom().nextInt(16) == 1){
+            int structure = EnginePreferences.getRandom().nextInt(0, 12);
+
+            switch (structure){
+                case 1:
+                    fillBlocks(chunk.getRelative(1, 3), chunk.getRelative(5, 4), "dirt");
+                    break;
+
+                case 2:
+                    fillBlocks(chunk.getRelative(2, 4), chunk.getRelative(8, 11), "stone");
+                    fillBlocks(chunk.getRelative(3, 1), chunk.getRelative(7, 3), "dirt");
+                    break;
+            }
+        }
     }
 }

@@ -1,12 +1,13 @@
 package io.voqs.blocks;
 
 import com.raylib.Raylib;
-import io.voqs.Position;
+import io.voqs.helpers.Color;
+import io.voqs.helpers.Position;
 
 public class Block {
-    private Position position = Position.ZERO;
+    private Position position = Position.ZERO();
     private final String name;
-    private final Raylib.Color fallBackColor;
+    private final Color fallBackColor;
 
     public Block(Position pos, String name){
         this.setPosition(pos);
@@ -26,7 +27,7 @@ public class Block {
         return name;
     }
 
-    public Raylib.Color getFallBackColor() {
+    public Color getFallBackColor() {
         return fallBackColor;
     }
 }

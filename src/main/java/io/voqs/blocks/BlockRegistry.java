@@ -4,6 +4,7 @@ import com.raylib.Colors;
 import com.raylib.Helpers;
 import com.raylib.Raylib;
 import io.voqs.globals.TextureRegistry;
+import io.voqs.helpers.Color;
 import org.luaj.vm2.LuaValue;
 
 import java.util.HashMap;
@@ -13,11 +14,11 @@ public class BlockRegistry {
     private static HashMap<String, BlockRegistryData> visibleBlocks = getBlockRegister();
 
     static {
-        registerBlock("dirt", "block/dirt.png", Colors.BROWN);
-        registerBlock("stone", "block/stone.png", Colors.GRAY);
+        registerBlock("dirt", "block/dirt.png", Color.fromRaylib(Colors.BROWN));
+        registerBlock("stone", "block/stone.png", Color.fromRaylib(Colors.GRAY));
     }
 
-    public static void registerBlock(String name, String path, Raylib.Color color){
+    public static void registerBlock(String name, String path, Color color){
         if (getBlockRegister().containsKey(name)) return;
 
         TextureRegistry.loadTexture(name, path);
@@ -45,19 +46,14 @@ public class BlockRegistry {
         return getVisibleBlocks().getOrDefault(name, null);
     }
 
-    public static Raylib.Color lua2Raylib(LuaValue color){
-        if (color.length() < 3) return Colors.BLANK;
+    public static Color lua2Raylib(LuaValue color){
+        if (color.length() < 3) return Color.NONE;
 
-        LuaValue opacity = color.get(4);
-        if (opacity.isnil()){
-            opacity = LuaValue.valueOf(100);
-        }
-
-        return Helpers.newColor(
-            color.get(1).toint(),
-            color.get(2).toint(),
-            color.get(3).toint(),
-            (int) ((opacity.tofloat() / 100) * 255)
+        return new Color(
+            color.get(1).checkint(),
+            color.get(2).checkint(),
+            color.get(3).checkint(),
+            color.get(4).checkint()
         );
     }
 

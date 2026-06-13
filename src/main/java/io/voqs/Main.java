@@ -10,7 +10,7 @@ public class Main {
 //        // to see how IntelliJ IDEA suggests fixing it.
 
         GameEngine engine = new GameEngine(960, 560, 60, "VOQS Engine");
-        engine.setBackgroundColor(Helpers.newColor(4, 4, 20, 255));
+        engine.setBackgroundColor(Helpers.newColor(0, 13, 8, 255));
 
         engine.gameloop();
     }

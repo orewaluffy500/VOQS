@@ -26,7 +26,7 @@ public class LoggerModule implements LuaModule {
             @Override
             public LuaValue call(LuaValue cause, LuaValue arg) {
                 Java2LuaBridge.Logger.Warn(cause.checkjstring(), arg.checkjstring());
-                return null;
+                return LuaValue.NONE;
             }
         };
     }
@@ -36,7 +36,7 @@ public class LoggerModule implements LuaModule {
             @Override
             public LuaValue call(LuaValue cause, LuaValue arg) {
                 Java2LuaBridge.Logger.Error(cause.checkjstring(), arg.checkjstring());
-                return null;
+                return LuaValue.NONE;
             }
         };
     }
@@ -46,7 +46,7 @@ public class LoggerModule implements LuaModule {
             @Override
             public LuaValue call(LuaValue arg) {
                 Java2LuaBridge.Logger.Notify(arg.checkjstring());
-                return null;
+                return LuaValue.NONE;
             }
         };
     }

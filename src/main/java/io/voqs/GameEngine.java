@@ -3,6 +3,9 @@ import com.raylib.*;
 import io.voqs.globals.Java2LuaBridge;
 import io.voqs.globals.TextureRegistry;
 import io.voqs.globals.EnginePreferences;
+import io.voqs.helpers.Color;
+import io.voqs.helpers.Position;
+import io.voqs.helpers.Size;
 import io.voqs.plugins.PluginEngine;
 import io.voqs.world.World;
 
@@ -21,11 +24,12 @@ public class GameEngine {
 
         initialize();
 
-        pluginEngine.loadScript("./metadata/plugins/test.lua");
+        pluginEngine.loadScript("./game/plugins/test.lua");
     }
 
     private void initialize(){
         Raylib.SetTraceLogLevel(Raylib.LOG_ERROR);
+        Raylib.SetWindowState(Raylib.FLAG_WINDOW_RESIZABLE);
         Raylib.InitWindow(width, height, title);
         Raylib.SetTargetFPS(fps);
     }
@@ -39,6 +43,17 @@ public class GameEngine {
         Raylib.DrawText(Integer.toString(Raylib.GetFPS()), 2, 2, 16, Colors.RAYWHITE);
         Raylib.EndDrawing();
     }
+
+    public void drawRect(Position pos, Size size, Color color){
+        Raylib.DrawRectangle(
+                pos.x(),
+                pos.y(),
+                size.x(),
+                size.y(),
+                color.toRaylib()
+        );
+    }
+
 
     public void gameloop(){
         pluginEngine.runOnceCallback();

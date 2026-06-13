@@ -57,7 +57,7 @@ public class RegistryModule implements LuaModule {
 
                 if (texName.contains("..") || !texName.startsWith("block")) return LuaValue.NONE;
 
-                BlockRegistry.registerBlock(this.name, texName, BlockRegistry.lua2Raylib(lColor));
+                BlockRegistry.registerBlock(name, texName, BlockRegistry.lua2Raylib(lColor));
 
                 return LuaValue.TRUE;
             }
